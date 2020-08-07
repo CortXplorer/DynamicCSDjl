@@ -1,11 +1,8 @@
 ### Set up
-using Statistics
-using DSP
-using Plots
-using MAT
+using Statistics, DSP
+using Plots, Colors
+using MAT, JLD, CSV
 using DataFrames
-using Colors
-using JLD
 
 # get to correct directory and label it home
 home    = @__DIR__
