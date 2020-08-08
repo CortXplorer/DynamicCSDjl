@@ -6,11 +6,7 @@ using DataFrames
 home    = @__DIR__
 func    = joinpath(home,"functions")
 figs    = joinpath(home,"figs")
-
-foldername = "AvrecPeakPlots"
-if !isdir(joinpath(figs,foldername))
-    mkdir(joinpath(figs,foldername))
-end
+include(joinpath(func,"AvrecPeakPlots.jl"))
 
 # Load in data from matlab table csv file which contains 2 and 5 hz peak amp and latency. 
 PeakData = CSV.File("AVRECPeakData.csv") |> DataFrame
@@ -23,18 +19,12 @@ KIC2, KIC5 = KIC[KIC[!,:ClickFreq] .== 2,:], KIC[KIC[!,:ClickFreq] .== 5,:]
 KIT2, KIT5 = KIT[KIT[!,:ClickFreq] .== 2,:], KIT[KIT[!,:ClickFreq] .== 5,:]
 KIV2, KIV5 = KIV[KIV[!,:ClickFreq] .== 2,:], KIV[KIV[!,:ClickFreq] .== 5,:]
 
-# peak amp by layer per measurement
-KIC2_PreCL = KIC2[KIC2[!,:Measurement] .== "preCL_1",:]
-KIC5_PreCL = KIC5[KIC5[!,:Measurement] .== "preCL_1",:]
+## Plots First 
+AvrecPeakvsMeas(figs,KIC2,KIC5,"KIC")
+AvrecPeakvsMeas(figs,KIT2,KIT5,"KIT")
+AvrecPeakvsMeas(figs,KIV2,KIV5,"KIV")
+AvrecPeakvsLay(figs,KIC2,KIC5,"KIC")
+AvrecPeakvsLay(figs,KIT2,KIT5,"KIT")
+AvrecPeakvsLay(figs,KIV2,KIV5,"KIV")
 
-Title = "PeakAmp of PreCL 2 Hz"
-avrecplot = @df KIC2_PreCL groupedboxplot(:Layer, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= ["Peak 1" "Peak 2"], title=Title, xlab = "Layer", ylab = "Peak Amplitude")
-
-name = joinpath(figs,foldername,Title) * ".pdf"
-savefig(avrecplot, name)
-
-Title = "PeakAmp of PreCL 5 Hz"
-@df KIC5_PreCL groupedboxplot(:Layer, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= ["Peak 1" "Peak 2"], title=Title, xlab = "Layer", ylab = "Peak Amplitude")
-
-name = joinpath(figs,foldername,Title) * ".pdf"
-savefig(avrecplot, name)
+## Now Stats
