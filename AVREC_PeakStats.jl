@@ -5,6 +5,7 @@ using HypothesisTests
 home    = @__DIR__
 func    = joinpath(home,"functions")
 figs    = joinpath(home,"figs")
+data    = joinpath(home,"Data")
 include(joinpath(func,"AvrecPeakPlots.jl"))
 
 # Load in data from matlab table csv file which contains 2 and 5 hz peak amp and latency. 
@@ -43,7 +44,7 @@ Ratio5 = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
 # add this column to the table to keep tags
 Stat2.Ratio = Ratio2
 Stat5.Ratio = Ratio5
-# jk, cheeky plots first
+# jk, cheeky plots first (boxplots of the ratios)
 AvrecPeakRatio(figs,Stat2,Stat5)
 # Setup for simple 2 sample t test from HypothesisTests ->
 # 3 between group comparisons across 5 measurement types and 5 layers:
@@ -92,3 +93,11 @@ for iComp = 1:length(CompList)
 end # comparison of which groups
 
 BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, P2Hz=P2Hz, P5Hz=P5Hz)
+
+foldername = "AvrecPeakStats"
+if !isdir(joinpath(data,foldername))
+    mkdir(joinpath(data,foldername))
+end
+title = "BetweenGroups"
+name = joinpath(data,foldername,title) * ".csv"
+CSV.write(name, BetweenGroup)
