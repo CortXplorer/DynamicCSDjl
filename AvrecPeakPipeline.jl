@@ -21,7 +21,7 @@ KIC2, KIC5 = KIC[KIC[!,:ClickFreq] .== 2,:], KIC[KIC[!,:ClickFreq] .== 5,:]
 KIT2, KIT5 = KIT[KIT[!,:ClickFreq] .== 2,:], KIT[KIT[!,:ClickFreq] .== 5,:]
 KIV2, KIV5 = KIV[KIV[!,:ClickFreq] .== 2,:], KIV[KIV[!,:ClickFreq] .== 5,:]
 
-## Box Plots First; 
+## Box Plots First ### 
 # Output: figures in folder AvrecPeakPlots_againstMeasurement/_againstLayer of Peak Amplitude over measurement/layer per layer/measurement
 AvrecPeakvsMeas(figs,KIC2,KIC5,"KIC")
 AvrecPeakvsMeas(figs,KIT2,KIT5,"KIT")
@@ -30,11 +30,29 @@ AvrecPeakvsLay(figs,KIC2,KIC5,"KIC")
 AvrecPeakvsLay(figs,KIT2,KIT5,"KIT")
 AvrecPeakvsLay(figs,KIV2,KIV5,"KIV")
 
-## Now Stats
-# J. Heck, in her paper, used EPSP5/EPSP1 to show the difference between groups of the ratio from the last to first stimulus response
+
+### Now Stats ###
+
 # seperate just stimulus presentation from full table
 Stim2Hz = PeakData[PeakData[!,:ClickFreq] .== 2,:]
 Stim5Hz = PeakData[PeakData[!,:ClickFreq] .== 5,:]
+
+## Peak Amp response difference
+# let's just check the first peak response amp and latency for now
+Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
+Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
+# plot it first for group comparison 
+# Output: figures in folder Avrec1stPeak of the first peak response and latency for all groups
+Avrec1stPeak(figs,Stat2,Stat5)
+# now the stats;
+# Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the peak amp and lat of the first response between each group
+Peak1_Between(data,Stat2,Stat5)
+# Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the peak amp and lat of the first response between each measurement to the first
+Peak1_Within(data,Stat2,Stat5)
+
+### Peak Ratio of Last/First response
+# -> J. Heck, in her paper, used EPSP5/EPSP1 to show the difference between groups of the ratio from the last to first stimulus response
+
 # seperate the 1st and last click
 Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
 Last2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 2,:]
@@ -47,11 +65,15 @@ Ratio5 = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
 Stat2.Ratio = Ratio2
 Stat5.Ratio = Ratio5
 
-# jk, cheeky plots first;
+# cheeky plots first;
 # Output: figures in folder AvrecPeakRatio of the level of synaptic depression shown as a function of the last divided by the first response peak amplitude
 AvrecPeakRatio(figs,Stat2,Stat5)
+# And stats for overlay
+
 
 # now the stats;
 # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the ratio of final to first peak response between each group
-PeakStats_Between(data,Stat2,Stat5)
-PeakStats_Within(data,Stat2,Stat5)
+PeakRatio_Between(data,Stat2,Stat5)
+
+# Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the ratio of final to first peak response between each measurement to the first
+PeakRatio_Within(data,Stat2,Stat5)
