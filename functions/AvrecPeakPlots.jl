@@ -102,6 +102,9 @@ function AvrecPeakRatio(figs,Tab2,Tab5)
 end
 
 function Avrec1stPeak(figs,Tab2,Tab5)
+    # Input: folder path figs, table for peak amp/lat of 2 hz and 5 hz, all groups being plotted
+    # Output: figures in folder Avrec1stPeak of the first peak response and latency for all groups
+
     foldername = "Avrec1stPeak"
     if !isdir(joinpath(figs,foldername))
         mkdir(joinpath(figs,foldername))
