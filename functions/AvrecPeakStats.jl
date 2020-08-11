@@ -1,4 +1,4 @@
-function PeakRatio_Between(data,Stat2,Stat5)
+function PeakRatio_Between(data,Stat2,Stat5,trialtype="TA")
     # Input: folder path data, table for ratio of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the ratio of final to first peak response between each group
 
@@ -54,12 +54,12 @@ function PeakRatio_Between(data,Stat2,Stat5)
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "Ratio_BetweenGroups"
+    title = "Ratio_BetweenGroups_" * trialtype
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end
 
-function PeakRatio_Within(data,Stat2,Stat5)
+function PeakRatio_Within(data,Stat2,Stat5,trialtype="TA")
     # Input: folder path data, table for ratio of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the ratio of final to first peak response between each measurement to the first
 
@@ -131,13 +131,13 @@ function PeakRatio_Within(data,Stat2,Stat5)
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "Ratio_WithinGroups"
+    title = "Ratio_WithinGroups_" * trialtype
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end
 
 
-function Peak1_Between(data,Stat2,Stat5)
+function Peak1_Between(data,Stat2,Stat5,trialtype="TA")
     # Input: folder path data, table for peak amp/lat of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the peak amp and lat of the first response between each group
 
@@ -197,12 +197,12 @@ function Peak1_Between(data,Stat2,Stat5)
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "Peak1_BetweenGroups"
+    title = "Peak1_BetweenGroups_" * trialtype
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end
 
-function Peak1_Within(data,Stat2,Stat5)
+function Peak1_Within(data,Stat2,Stat5,trialtype="TA")
     # Input: folder path data, table for peak amp/lat of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the peak amp and lat of the first response between each measurement to the first
 
@@ -216,22 +216,22 @@ function Peak1_Within(data,Stat2,Stat5)
     Layer       = String[]
     # Measurement = String[]   
     P2Hz_Prev1_Amp  = ones(length(GroupList) * length(LayList)) # number of rows (more columns this time)
-    P2Hz_Prev2_Amp  = ones(length(P2Hz_Prev1))
-    P2Hz_Prev3_Amp  = ones(length(P2Hz_Prev1))
-    P2Hz_Prev4_Amp  = ones(length(P2Hz_Prev1))
-    P5Hz_Prev1_Amp  = ones(length(P2Hz_Prev1))
-    P5Hz_Prev2_Amp  = ones(length(P2Hz_Prev1))
-    P5Hz_Prev3_Amp  = ones(length(P2Hz_Prev1))
-    P5Hz_Prev4_Amp  = ones(length(P2Hz_Prev1))
+    P2Hz_Prev2_Amp  = ones(length(P2Hz_Prev1_Amp))
+    P2Hz_Prev3_Amp  = ones(length(P2Hz_Prev1_Amp))
+    P2Hz_Prev4_Amp  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev1_Amp  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev2_Amp  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev3_Amp  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev4_Amp  = ones(length(P2Hz_Prev1_Amp))
 
-    P2Hz_Prev1_Lat  = ones(length(P2Hz_Prev1))
-    P2Hz_Prev2_Lat  = ones(length(P2Hz_Prev1))
-    P2Hz_Prev3_Lat  = ones(length(P2Hz_Prev1))
-    P2Hz_Prev4_Lat  = ones(length(P2Hz_Prev1))
-    P5Hz_Prev1_Lat  = ones(length(P2Hz_Prev1))
-    P5Hz_Prev2_Lat  = ones(length(P2Hz_Prev1))
-    P5Hz_Prev3_Lat  = ones(length(P2Hz_Prev1))
-    P5Hz_Prev4_Lat  = ones(length(P2Hz_Prev1))
+    P2Hz_Prev1_Lat  = ones(length(P2Hz_Prev1_Amp))
+    P2Hz_Prev2_Lat  = ones(length(P2Hz_Prev1_Amp))
+    P2Hz_Prev3_Lat  = ones(length(P2Hz_Prev1_Amp))
+    P2Hz_Prev4_Lat  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev1_Lat  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev2_Lat  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev3_Lat  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev4_Lat  = ones(length(P2Hz_Prev1_Amp))
 
     count       = [1]
     # loop through the above - create a table output! :) 
@@ -293,7 +293,7 @@ function Peak1_Within(data,Stat2,Stat5)
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "Peak1_WithinGroups"
+    title = "Peak1_WithinGroups_" * trialtype
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end

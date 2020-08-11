@@ -1,5 +1,5 @@
-using StatsPlots
 using CSV, DataFrames
+using StatsPlots
 using HypothesisTests
 
 home    = @__DIR__
@@ -10,12 +10,13 @@ include(joinpath(func,"AvrecPeakPlots.jl"))
 include(joinpath(func,"AvrecPeakStats.jl"))
 
 # Load in data from matlab table csv file which contains 2 and 5 hz peak amp and latency. 
-PeakData = CSV.File("AVRECPeakData.csv") |> DataFrame
+PeakDataTA = CSV.File("AVRECPeakData.csv") |> DataFrame # trial average
+PeakDataST = CSV.File("AVRECPeakDataST.csv") |> DataFrame # single trial
 
 # seperate by group
-KIC = PeakData[PeakData[!,:Group] .== "KIC",:]
-KIT = PeakData[PeakData[!,:Group] .== "KIT",:]
-KIV = PeakData[PeakData[!,:Group] .== "KIV",:]
+KIC = PeakDataTA[PeakDataTA[!,:Group] .== "KIC",:]
+KIT = PeakDataTA[PeakDataTA[!,:Group] .== "KIT",:]
+KIV = PeakDataTA[PeakDataTA[!,:Group] .== "KIV",:]
 # further seperate by stimulus
 KIC2, KIC5 = KIC[KIC[!,:ClickFreq] .== 2,:], KIC[KIC[!,:ClickFreq] .== 5,:]
 KIT2, KIT5 = KIT[KIT[!,:ClickFreq] .== 2,:], KIT[KIT[!,:ClickFreq] .== 5,:]
@@ -32,22 +33,19 @@ AvrecPeakvsLay(figs,KIV2,KIV5,"KIV")
 
 
 ### Now Stats ###
-
+# Average Trials ---------------------------------------------------------------------------
 # seperate just stimulus presentation from full table
-Stim2Hz = PeakData[PeakData[!,:ClickFreq] .== 2,:]
-Stim5Hz = PeakData[PeakData[!,:ClickFreq] .== 5,:]
+Stim2Hz = PeakDataTA[PeakDataTA[!,:ClickFreq] .== 2,:]
+Stim5Hz = PeakDataTA[PeakDataTA[!,:ClickFreq] .== 5,:]
 
 ## Peak Amp response difference
 # let's just check the first peak response amp and latency for now
 Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
 Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
 # plot it first for group comparison 
-# Output: figures in folder Avrec1stPeak of the first peak response and latency for all groups
 Avrec1stPeak(figs,Stat2,Stat5)
 # now the stats;
-# Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the peak amp and lat of the first response between each group
 Peak1_Between(data,Stat2,Stat5)
-# Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the peak amp and lat of the first response between each measurement to the first
 Peak1_Within(data,Stat2,Stat5)
 
 ### Peak Ratio of Last/First response
@@ -66,14 +64,39 @@ Stat2.Ratio = Ratio2
 Stat5.Ratio = Ratio5
 
 # cheeky plots first;
-# Output: figures in folder AvrecPeakRatio of the level of synaptic depression shown as a function of the last divided by the first response peak amplitude
 AvrecPeakRatio(figs,Stat2,Stat5)
 # And stats for overlay
-
-
-# now the stats;
-# Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the ratio of final to first peak response between each group
 PeakRatio_Between(data,Stat2,Stat5)
-
-# Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the ratio of final to first peak response between each measurement to the first
 PeakRatio_Within(data,Stat2,Stat5)
+
+
+# Single Trials ----------------------------------------------------------------------------
+
+# seperate just stimulus presentation from full table
+Stim2Hz = PeakDataST[PeakDataST[!,:ClickFreq] .== 2,:]
+Stim5Hz = PeakDataST[PeakDataST[!,:ClickFreq] .== 5,:]
+
+## Peak Amp response difference
+Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
+Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
+ 
+Avrec1stPeak(figs,Stat2,Stat5,"ST")
+Peak1_Between(data,Stat2,Stat5,"ST")
+Peak1_Within(data,Stat2,Stat5,"ST") # currently failing only in ST mode
+
+### Peak Ratio of Last/First response
+# seperate the 1st and last click
+Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
+Last2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 2,:]
+Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
+Last5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 5,:]
+# divide the last by first
+Ratio2 = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp]
+Ratio5 = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
+# add this column to the table to keep tags
+Stat2.Ratio = Ratio2
+Stat5.Ratio = Ratio5
+
+AvrecPeakRatio(figs,Stat2,Stat5,"ST")
+PeakRatio_Between(data,Stat2,Stat5,"ST")
+PeakRatio_Within(data,Stat2,Stat5,"ST") # currently failing only in ST mode
