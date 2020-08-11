@@ -17,13 +17,13 @@ function AvrecPeakvsLay(figs,Tab2,Tab5,GroupName)
         Title = GroupName * " PeakAmp of " * MeasList[iMeas] * " at 2 Hz"
         avrecplot = @df Tab2_Sort groupedboxplot(:Layer, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= ["Peak 1" "Peak 2"], title=Title, xlab = "Layer", ylab = "Peak Amplitude");
 
-        name = joinpath(figs,foldername,Title) * ".pdf"
+        name = joinpath(figs,foldername,Title) * ".png"
         savefig(avrecplot, name);
 
         Title = GroupName * " PeakAmp of " * MeasList[iMeas] * " at 5 Hz"
         avrecplot = @df Tab5_Sort groupedboxplot(:Layer, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= ["Peak 1" "Peak 2" "Peak 3" "Peak 4" "Peak 5"], title=Title, xlab = "Layer", ylab = "Peak Amplitude");
 
-        name = joinpath(figs,foldername,Title) * ".pdf"
+        name = joinpath(figs,foldername,Title) * ".png"
         savefig(avrecplot, name);
     end
 end
@@ -47,13 +47,25 @@ function AvrecPeakvsMeas(figs,Tab2,Tab5,GroupName)
         Title = GroupName * " PeakAmp of " * LayList[iLay] * " at 2 Hz"
         avrecplot = @df Tab2_Sort groupedboxplot(:Measurement, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= ["Peak 1" "Peak 2"], title=Title, xlab = "Measurement", ylab = "Peak Amplitude");
 
-        name = joinpath(figs,foldername,Title) * ".pdf"
+        name = joinpath(figs,foldername,Title) * ".png"
         savefig(avrecplot, name);
 
         Title = GroupName * " PeakAmp of " * LayList[iLay] * " at 5 Hz"
         avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= ["Peak 1" "Peak 2" "Peak 3" "Peak 4" "Peak 5"], title=Title, xlab = "Measurement", ylab = "Peak Amplitude");
 
-        name = joinpath(figs,foldername,Title) * ".pdf"
+        name = joinpath(figs,foldername,Title) * ".png"
+        savefig(avrecplot, name);
+
+        Title = GroupName * " Peak Latency of " * LayList[iLay] * " at 2 Hz"
+        avrecplot = @df Tab2_Sort groupedboxplot(:Measurement, :PeakLat, group = :OrderofClick, bar_position = :dodge, lab= ["Peak 1" "Peak 2"], title=Title, xlab = "Measurement", ylab = "Peak Amplitude");
+
+        name = joinpath(figs,foldername,Title) * ".png"
+        savefig(avrecplot, name);
+
+        Title = GroupName * " Peak Latency of " * LayList[iLay] * " at 5 Hz"
+        avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :PeakLat, group = :OrderofClick, bar_position = :dodge, lab= ["Peak 1" "Peak 2" "Peak 3" "Peak 4" "Peak 5"], title=Title, xlab = "Measurement", ylab = "Peak Amplitude");
+
+        name = joinpath(figs,foldername,Title) * ".png"
         savefig(avrecplot, name);
     end
 end
@@ -78,13 +90,52 @@ function AvrecPeakRatio(figs,Tab2,Tab5)
         Title = "Synaptic dep ratio of " * LayList[iLay] * " at 2 Hz"
         ratioplot = @df Tab2_Sort groupedboxplot(:Measurement, :Ratio, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
 
-        name = joinpath(figs,foldername,Title) * ".pdf"
+        name = joinpath(figs,foldername,Title) * ".png"
         savefig(ratioplot, name);
 
         Title = "Synaptic dep ratio of " * LayList[iLay] * " at 5 Hz"
         avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :Ratio, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
 
-        name = joinpath(figs,foldername,Title) * ".pdf"
+        name = joinpath(figs,foldername,Title) * ".png"
+        savefig(avrecplot, name);
+    end
+end
+
+function Avrec1stPeak(figs,Tab2,Tab5)
+    foldername = "Avrec1stPeak"
+    if !isdir(joinpath(figs,foldername))
+        mkdir(joinpath(figs,foldername))
+    end
+
+    LayList = unique(Tab2[!,:Layer])
+
+    for iLay = 1:length(LayList)
+        ### peak amp by measurement per Layer ###
+        Tab2_Sort = Tab2[Tab2[!,:Layer] .== LayList[iLay],:]
+        Tab5_Sort = Tab5[Tab5[!,:Layer] .== LayList[iLay],:]
+
+        Title = "First peak amplitude of " * LayList[iLay] * " at 2 Hz"
+        ratioplot = @df Tab2_Sort groupedboxplot(:Measurement, :PeakAmp, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+
+        name = joinpath(figs,foldername,Title) * ".png"
+        savefig(ratioplot, name);
+
+        Title = "First peak amplitude of " * LayList[iLay] * " at 5 Hz"
+        avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :PeakAmp, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+
+        name = joinpath(figs,foldername,Title) * ".png"
+        savefig(avrecplot, name);
+
+        Title = "First peak latency of " * LayList[iLay] * " at 2 Hz"
+        ratioplot = @df Tab2_Sort groupedboxplot(:Measurement, :PeakLat, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+
+        name = joinpath(figs,foldername,Title) * ".png"
+        savefig(ratioplot, name);
+
+        Title = "First peak latency of " * LayList[iLay] * " at 5 Hz"
+        avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :PeakLat, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+
+        name = joinpath(figs,foldername,Title) * ".png"
         savefig(avrecplot, name);
     end
 end
