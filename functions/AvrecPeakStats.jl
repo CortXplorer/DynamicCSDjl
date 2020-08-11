@@ -1,4 +1,4 @@
-function PeakStats_Between(data,Stat2,Stat5)
+function PeakRatio_Between(data,Stat2,Stat5)
     # Input: folder path data, table for ratio of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the ratio of final to first peak response between each group
 
@@ -54,12 +54,12 @@ function PeakStats_Between(data,Stat2,Stat5)
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "BetweenGroups"
+    title = "Ratio_BetweenGroups"
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end
 
-function PeakStats_Within(data,Stat2,Stat5)
+function PeakRatio_Within(data,Stat2,Stat5)
     # Input: folder path data, table for ratio of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the ratio of final to first peak response between each group
 
@@ -131,7 +131,7 @@ function PeakStats_Within(data,Stat2,Stat5)
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "WithinGroups"
+    title = "Ratio_WithinGroups"
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end
