@@ -43,7 +43,7 @@ Stim5Hz = PeakDataTA[PeakDataTA[!,:ClickFreq] .== 5,:]
 Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
 Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
 # plot it first for group comparison 
-Avrec1stPeak(figs,Stat2,Stat5)
+Avrec1Peak(figs,Stat2,Stat5)
 # now the stats;
 Peak1_Between(data,Stat2,Stat5)
 Peak1_Within(data,Stat2,Stat5)
