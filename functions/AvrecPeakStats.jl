@@ -91,7 +91,7 @@ function PeakRatio_Within(data,Stat2,Stat5,trialtype="TA")
         for iLay = 1:length(LayList)
             # pull out the layer one at a time
             G_2Hz_lay = G_2Hz[G_2Hz[!,:Layer] .== LayList[iLay],:]
-            G_5Hz_lay = G_5Hz[G_2Hz[!,:Layer] .== LayList[iLay],:]
+            G_5Hz_lay = G_5Hz[G_5Hz[!,:Layer] .== LayList[iLay],:]
 
             # further pull out each measurement all together
             G1_2Hz_Pre = G_2Hz_lay[G_2Hz_lay[!,:Measurement] .== MeasList[1],:]
@@ -243,7 +243,7 @@ function Peak1_Within(data,Stat2,Stat5,trialtype="TA")
         for iLay = 1:length(LayList)
             # pull out the layer one at a time
             G_2Hz_lay = G_2Hz[G_2Hz[!,:Layer] .== LayList[iLay],:]
-            G_5Hz_lay = G_5Hz[G_2Hz[!,:Layer] .== LayList[iLay],:]
+            G_5Hz_lay = G_5Hz[G_5Hz[!,:Layer] .== LayList[iLay],:]
 
             # further pull out each measurement all together
             G1_2Hz_Pre = G_2Hz_lay[G_2Hz_lay[!,:Measurement] .== MeasList[1],:]
