@@ -137,7 +137,7 @@ function PeakRatio_Within(data,Stat2,Stat5,trialtype="TA")
 end
 
 
-function Peak1_Between(data,Stat2,Stat5,trialtype="TA")
+function Peak1_Between(data,Stat2,Stat5,trialtype="TA",whichpeak="First")
     # Input: folder path data, table for peak amp/lat of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the peak amp and lat of the first response between each group
 
@@ -152,8 +152,10 @@ function Peak1_Between(data,Stat2,Stat5,trialtype="TA")
     Measurement = String[]   
     P2Hz_Amp    = ones(length(CompList) * length(LayList) * length(MeasList)) # number of rows
     P2Hz_Lat    = ones(length(P2Hz_Amp))
+    P2Hz_RMS    = ones(length(P2Hz_Amp))
     P5Hz_Amp    = ones(length(P2Hz_Amp))
     P5Hz_Lat    = ones(length(P2Hz_Amp))
+    P5Hz_RMS    = ones(length(P2Hz_Amp))
     count       = [1]
     # loop through the above - create a table output! :) 
     for iComp = 1:length(CompList)
@@ -180,8 +182,10 @@ function Peak1_Between(data,Stat2,Stat5,trialtype="TA")
                 # find the p value outcome for this comparison at both stimuli conditions
                 P2Hz_Amp[count[1]] = pvalue(UnequalVarianceTTest(G1_2Hz_lay[!,:PeakAmp],G2_2Hz_lay[!,:PeakAmp]))
                 P2Hz_Lat[count[1]] = pvalue(UnequalVarianceTTest(G1_2Hz_lay[!,:PeakLat],G2_2Hz_lay[!,:PeakLat]))
+                P2Hz_RMS[count[1]] = pvalue(UnequalVarianceTTest(G1_2Hz_lay[!,:RMS],G2_2Hz_lay[!,:RMS]))
                 P5Hz_Amp[count[1]] = pvalue(UnequalVarianceTTest(G1_5Hz_lay[!,:PeakAmp],G2_5Hz_lay[!,:PeakAmp]))
                 P5Hz_Lat[count[1]] = pvalue(UnequalVarianceTTest(G1_5Hz_lay[!,:PeakLat],G2_5Hz_lay[!,:PeakLat]))
+                P5Hz_RMS[count[1]] = pvalue(UnequalVarianceTTest(G1_5Hz_lay[!,:RMS],G2_5Hz_lay[!,:RMS]))
                 count[1] = count[1] + 1
                 # store the appropriate tags at the same positions in their respective lists
                 push!(Comparison,CompList[iComp])
@@ -191,18 +195,18 @@ function Peak1_Between(data,Stat2,Stat5,trialtype="TA")
         end # measurement type
     end # comparison of which groups
 
-    BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, P2Hz_Amp=P2Hz_Amp, P2Hz_Lat=P2Hz_Lat, P5Hz_Amp=P5Hz_Amp, P5Hz_Lat=P5Hz_Lat)
+    BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, P2Hz_Amp=P2Hz_Amp, P2Hz_Lat=P2Hz_Lat, P2Hz_RMS=P2Hz_RMS, P5Hz_Amp=P5Hz_Amp, P5Hz_Lat=P5Hz_Lat, P5Hz_RMS=P5Hz_RMS)
 
     foldername = "AvrecPeakStats"
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "Peak1_BetweenGroups_" * trialtype
+    title = whichpeak * "_BetweenGroups_" * trialtype
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end
 
-function Peak1_Within(data,Stat2,Stat5,trialtype="TA")
+function Peak1_Within(data,Stat2,Stat5,trialtype="TA",whichpeak="First")
     # Input: folder path data, table for peak amp/lat of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the peak amp and lat of the first response between each measurement to the first
 
@@ -232,6 +236,15 @@ function Peak1_Within(data,Stat2,Stat5,trialtype="TA")
     P5Hz_Prev2_Lat  = ones(length(P2Hz_Prev1_Amp))
     P5Hz_Prev3_Lat  = ones(length(P2Hz_Prev1_Amp))
     P5Hz_Prev4_Lat  = ones(length(P2Hz_Prev1_Amp))
+
+    P2Hz_Prev1_RMS  = ones(length(P2Hz_Prev1_Amp))
+    P2Hz_Prev2_RMS  = ones(length(P2Hz_Prev1_Amp))
+    P2Hz_Prev3_RMS  = ones(length(P2Hz_Prev1_Amp))
+    P2Hz_Prev4_RMS  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev1_RMS  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev2_RMS  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev3_RMS  = ones(length(P2Hz_Prev1_Amp))
+    P5Hz_Prev4_RMS  = ones(length(P2Hz_Prev1_Amp))
 
     count       = [1]
     # loop through the above - create a table output! :) 
@@ -278,6 +291,16 @@ function Peak1_Within(data,Stat2,Stat5,trialtype="TA")
             P5Hz_Prev2_Lat[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:PeakLat], G1_5Hz_2[!,:PeakLat]))
             P5Hz_Prev3_Lat[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:PeakLat], G1_5Hz_3[!,:PeakLat]))
             P5Hz_Prev4_Lat[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:PeakLat], G1_5Hz_4[!,:PeakLat]))
+
+            P2Hz_Prev1_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RMS], G1_2Hz_1[!,:RMS]))
+            P2Hz_Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RMS], G1_2Hz_2[!,:RMS]))
+            P2Hz_Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RMS], G1_2Hz_3[!,:RMS]))
+            P2Hz_Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RMS], G1_2Hz_4[!,:RMS]))
+
+            P5Hz_Prev1_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RMS], G1_5Hz_1[!,:RMS]))
+            P5Hz_Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RMS], G1_5Hz_2[!,:RMS]))
+            P5Hz_Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RMS], G1_5Hz_3[!,:RMS]))
+            P5Hz_Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RMS], G1_5Hz_4[!,:RMS]))
             
             count[1] = count[1] + 1
             # store the appropriate tags at the same positions in their respective lists
@@ -287,13 +310,13 @@ function Peak1_Within(data,Stat2,Stat5,trialtype="TA")
         end # layer
     end # comparison of which groups
 
-    BetweenGroup = DataFrame(Group=Group, Layer=Layer, P2Hz_Prev1_Amp=P2Hz_Prev1_Amp, P2Hz_Prev2_Amp=P2Hz_Prev2_Amp, P2Hz_Prev3_Amp=P2Hz_Prev3_Amp, P2Hz_Prev4_Amp=P2Hz_Prev4_Amp, P5Hz_Prev1_Amp=P5Hz_Prev1_Amp, P5Hz_Prev2_Amp=P5Hz_Prev2_Amp, P5Hz_Prev3_Amp=P5Hz_Prev3_Amp, P5Hz_Prev4_Amp=P5Hz_Prev4_Amp, P2Hz_Prev1_Lat=P2Hz_Prev1_Lat, P2Hz_Prev2_Lat=P2Hz_Prev2_Lat, P2Hz_Prev3_Lat=P2Hz_Prev3_Lat, P2Hz_Prev4_Lat=P2Hz_Prev4_Lat, P5Hz_Prev1_Lat=P5Hz_Prev1_Lat, P5Hz_Prev2_Lat=P5Hz_Prev2_Lat, P5Hz_Prev3_Lat=P5Hz_Prev3_Lat, P5Hz_Prev4_Lat=P5Hz_Prev4_Lat)
+    BetweenGroup = DataFrame(Group=Group, Layer=Layer, P2Hz_Prev1_Amp=P2Hz_Prev1_Amp, P2Hz_Prev2_Amp=P2Hz_Prev2_Amp, P2Hz_Prev3_Amp=P2Hz_Prev3_Amp, P2Hz_Prev4_Amp=P2Hz_Prev4_Amp, P5Hz_Prev1_Amp=P5Hz_Prev1_Amp, P5Hz_Prev2_Amp=P5Hz_Prev2_Amp, P5Hz_Prev3_Amp=P5Hz_Prev3_Amp, P5Hz_Prev4_Amp=P5Hz_Prev4_Amp, P2Hz_Prev1_Lat=P2Hz_Prev1_Lat, P2Hz_Prev2_Lat=P2Hz_Prev2_Lat, P2Hz_Prev3_Lat=P2Hz_Prev3_Lat, P2Hz_Prev4_Lat=P2Hz_Prev4_Lat, P5Hz_Prev1_Lat=P5Hz_Prev1_Lat, P5Hz_Prev2_Lat=P5Hz_Prev2_Lat, P5Hz_Prev3_Lat=P5Hz_Prev3_Lat, P5Hz_Prev4_Lat=P5Hz_Prev4_Lat, P2Hz_Prev1_RMS=P2Hz_Prev1_RMS, P2Hz_Prev2_RMS=P2Hz_Prev2_RMS, P2Hz_Prev3_RMS=P2Hz_Prev3_RMS, P2Hz_Prev4_RMS=P2Hz_Prev4_RMS, P5Hz_Prev1_RMS=P5Hz_Prev1_RMS, P5Hz_Prev2_RMS=P5Hz_Prev2_RMS, P5Hz_Prev3_RMS=P5Hz_Prev3_RMS, P5Hz_Prev4_RMS=P5Hz_Prev4_RMS)
 
     foldername = "AvrecPeakStats"
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "Peak1_WithinGroups_" * trialtype
+    title = whichpeak * "_WithinGroups_" * trialtype
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end
