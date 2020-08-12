@@ -77,12 +77,28 @@ Stim2Hz = PeakDataST[PeakDataST[!,:ClickFreq] .== 2,:]
 Stim5Hz = PeakDataST[PeakDataST[!,:ClickFreq] .== 5,:]
 
 ## Peak Amp response difference
+whichpeak = "First"
 Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
 Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
  
-Avrec1stPeak(figs,Stat2,Stat5,"ST")
-Peak1_Between(data,Stat2,Stat5,"ST")
-Peak1_Within(data,Stat2,Stat5,"ST") # currently failing only in ST mode
+Avrec1Peak(figs,Stat2,Stat5,"ST",whichpeak)
+Peak1_Between(data,Stat2,Stat5,"ST",whichpeak)
+Peak1_Within(data,Stat2,Stat5,"ST",whichpeak) 
+
+whichpeak = "Second"
+Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 2,:]
+Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 2,:]
+ 
+Avrec1Peak(figs,Stat2,Stat5,"ST",whichpeak)
+Peak1_Between(data,Stat2,Stat5,"ST",whichpeak)
+Peak1_Within(data,Stat2,Stat5,"ST",whichpeak) 
+
+whichpeak = "Third" # this isn't going to work actually...
+Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 2,:]
+ 
+Avrec1Peak(figs,Stat2,Stat5,"ST",whichpeak)
+Peak1_Between(data,Stat2,Stat5,"ST",whichpeak)
+Peak1_Within(data,Stat2,Stat5,"ST",whichpeak) 
 
 ### Peak Ratio of Last/First response
 # seperate the 1st and last click
@@ -99,4 +115,4 @@ Stat5.Ratio = Ratio5
 
 AvrecPeakRatio(figs,Stat2,Stat5,"ST")
 PeakRatio_Between(data,Stat2,Stat5,"ST")
-PeakRatio_Within(data,Stat2,Stat5,"ST") # currently failing only in ST mode
+PeakRatio_Within(data,Stat2,Stat5,"ST") 
