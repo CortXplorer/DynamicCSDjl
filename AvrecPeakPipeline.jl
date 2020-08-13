@@ -34,11 +34,12 @@ AvrecPeakvsLay(figs,KIV2,KIV5,"KIV")
 
 ### Now Stats ###
 # Average Trials ---------------------------------------------------------------------------
+
 # seperate just stimulus presentation from full table
 Stim2Hz = PeakDataTA[PeakDataTA[!,:ClickFreq] .== 2,:]
 Stim5Hz = PeakDataTA[PeakDataTA[!,:ClickFreq] .== 5,:]
 
-## Peak Amp response difference
+## Peak Amp/Lat/RMS response difference
 peaks = ["First" "Second" "Third" "Fourth" "Fifth"]
 for ipeak = 1:length(peaks)
     whichpeak = peaks[ipeak]
@@ -56,7 +57,7 @@ for ipeak = 1:length(peaks)
     Peak1_Within(data,Stat5,whichpeak,"5Hz","TA")
 end
 
-### Peak Ratio of Last/First response
+### Peak Amp/RMS Ratio of Last/First response
 # -> J. Heck, in her paper, used EPSP5/EPSP1 to show the difference between groups of the ratio from the last to first stimulus response
 
 # seperate the 1st and last click
@@ -65,11 +66,13 @@ Last2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 2,:]
 Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
 Last5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 5,:]
 # divide the last by first
-Ratio2 = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp]
-Ratio5 = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
+Ratio2AMP = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp]
+Ratio5AMP = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
+Ratio2RMS = Last2[!,:RMS] ./ Stat2[!,:RMS]
+Ratio5RMS = Last5[!,:RMS] ./ Stat5[!,:RMS]
 # add this column to the table to keep tags
-Stat2.Ratio = Ratio2
-Stat5.Ratio = Ratio5
+Stat2.RatioAMP, Stat2.RatioRMS = Ratio2AMP, Ratio2RMS
+Stat5.RatioAMP, Stat5.RatioRMS = Ratio5AMP, Ratio5RMS
 
 # cheeky plots first;
 AvrecPeakRatio(figs,Stat2,Stat5)
@@ -109,11 +112,13 @@ Last2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 2,:]
 Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
 Last5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 5,:]
 # divide the last by first
-Ratio2 = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp]
-Ratio5 = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
+Ratio2AMP = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp]
+Ratio5AMP = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
+Ratio2RMS = Last2[!,:RMS] ./ Stat2[!,:RMS]
+Ratio5RMS = Last5[!,:RMS] ./ Stat5[!,:RMS]
 # add this column to the table to keep tags
-Stat2.Ratio = Ratio2
-Stat5.Ratio = Ratio5
+Stat2.RatioAMP, Stat2.RatioRMS = Ratio2AMP, Ratio2RMS
+Stat5.RatioAMP, Stat5.RatioRMS = Ratio5AMP, Ratio5RMS
 
 AvrecPeakRatio(figs,Stat2,Stat5,"ST")
 PeakRatio_Between(data,Stat2,Stat5,"ST")

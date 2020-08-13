@@ -99,14 +99,26 @@ function AvrecPeakRatio(figs,Tab2,Tab5,trialtype="TA")
         Tab2_Sort = Tab2[Tab2[!,:Layer] .== LayList[iLay],:]
         Tab5_Sort = Tab5[Tab5[!,:Layer] .== LayList[iLay],:]
 
-        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 2 Hz "
-        ratioplot = @df Tab2_Sort groupedboxplot(:Measurement, :Ratio, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 2 Hz Peak Amplitude "
+        ratioplot = @df Tab2_Sort groupedboxplot(:Measurement, :RatioAMP, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
 
         name = joinpath(figs,foldername,Title) * trialtype * ".png"
         savefig(ratioplot, name);
 
-        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 5 Hz "
-        avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :Ratio, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 5 Hz Peak Amplitude "
+        avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :RatioAMP, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+
+        name = joinpath(figs,foldername,Title) * trialtype * ".png"
+        savefig(avrecplot, name);
+
+        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 2 Hz RMS "
+        ratioplot = @df Tab2_Sort groupedboxplot(:Measurement, :RatioRMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak RMS")
+
+        name = joinpath(figs,foldername,Title) * trialtype * ".png"
+        savefig(ratioplot, name);
+
+        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 5 Hz RMS "
+        avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :RatioRMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak RMS")
 
         name = joinpath(figs,foldername,Title) * trialtype * ".png"
         savefig(avrecplot, name);
