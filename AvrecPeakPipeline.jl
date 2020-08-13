@@ -39,14 +39,22 @@ Stim2Hz = PeakDataTA[PeakDataTA[!,:ClickFreq] .== 2,:]
 Stim5Hz = PeakDataTA[PeakDataTA[!,:ClickFreq] .== 5,:]
 
 ## Peak Amp response difference
-# let's just check the first peak response amp and latency for now
-Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
-Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
-# plot it first for group comparison 
-Avrec1Peak(figs,Stat2,Stat5)
-# now the stats;
-Peak1_Between(data,Stat2,Stat5)
-Peak1_Within(data,Stat2,Stat5)
+peaks = ["First" "Second" "Third" "Fourth" "Fifth"]
+for ipeak = 1:length(peaks)
+    whichpeak = peaks[ipeak]
+
+    if ipeak <= 2
+        Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== ipeak,:]
+        Avrec1Peak(figs,Stat2,whichpeak,"2Hz","TA")
+        Peak1_Between(data,Stat2,whichpeak,"2Hz","TA")
+        Peak1_Within(data,Stat2,whichpeak,"2Hz","TA")
+    end
+
+    Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== ipeak,:]
+    Avrec1Peak(figs,Stat5,whichpeak,"5Hz","TA")
+    Peak1_Between(data,Stat5,whichpeak,"5Hz","TA")
+    Peak1_Within(data,Stat5,whichpeak,"5Hz","TA")
+end
 
 ### Peak Ratio of Last/First response
 # -> J. Heck, in her paper, used EPSP5/EPSP1 to show the difference between groups of the ratio from the last to first stimulus response
@@ -77,28 +85,22 @@ Stim2Hz = PeakDataST[PeakDataST[!,:ClickFreq] .== 2,:]
 Stim5Hz = PeakDataST[PeakDataST[!,:ClickFreq] .== 5,:]
 
 ## Peak Amp response difference
-whichpeak = "First"
-Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
-Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
- 
-Avrec1Peak(figs,Stat2,Stat5,"ST",whichpeak)
-Peak1_Between(data,Stat2,Stat5,"ST",whichpeak)
-Peak1_Within(data,Stat2,Stat5,"ST",whichpeak) 
+peaks = ["First" "Second" "Third" "Fourth" "Fifth"]
+for ipeak = 1:length(peaks)
+    whichpeak = peaks[ipeak]
 
-whichpeak = "Second"
-Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 2,:]
-Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 2,:]
- 
-Avrec1Peak(figs,Stat2,Stat5,"ST",whichpeak)
-Peak1_Between(data,Stat2,Stat5,"ST",whichpeak)
-Peak1_Within(data,Stat2,Stat5,"ST",whichpeak) 
+    if ipeak <= 2
+        Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== ipeak,:]
+        Avrec1Peak(figs,Stat2,whichpeak,"2Hz","ST")
+        Peak1_Between(data,Stat2,whichpeak,"2Hz","ST")
+        Peak1_Within(data,Stat2,whichpeak,"2Hz","ST")
+    end
 
-whichpeak = "Third" # this isn't going to work actually...
-Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 2,:]
- 
-Avrec1Peak(figs,Stat2,Stat5,"ST",whichpeak)
-Peak1_Between(data,Stat2,Stat5,"ST",whichpeak)
-Peak1_Within(data,Stat2,Stat5,"ST",whichpeak) 
+    Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== ipeak,:]
+    Avrec1Peak(figs,Stat5,whichpeak,"5Hz","ST")
+    Peak1_Between(data,Stat5,whichpeak,"5Hz","ST")
+    Peak1_Within(data,Stat5,whichpeak,"5Hz","ST")
+end
 
 ### Peak Ratio of Last/First response
 # seperate the 1st and last click
