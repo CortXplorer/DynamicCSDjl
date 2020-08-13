@@ -1,48 +1,40 @@
-function PeakRatio_Between(data,Stat2,Stat5,trialtype="TA")
+function PeakRatio_Between(data,StatTab,whichstim="2Hz",trialtype="TA")
     # Input: folder path data, table for ratio of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the ratio of final to first peak response between each group
 
     # Setup for simple 2 sample t test from HypothesisTests ->
     # 3 between group comparisons across 5 measurement types and 5 layers:
     CompList    = ["KIC vs KIT" "KIC vs KIV" "KIT vs KIV"]
-    LayList     = unique(Stat2[!,:Layer])
-    MeasList    = unique(Stat2[!,:Measurement])
+    LayList     = unique(StatTab[!,:Layer])
+    MeasList    = unique(StatTab[!,:Measurement])
     # containers for the table columns: 
     Comparison  = String[]
     Layer       = String[]
     Measurement = String[]   
-    P2HzAMP        = ones(length(CompList) * length(LayList) * length(MeasList)) # number of rows
-    P5HzAMP        = ones(length(P2HzAMP))
-    P2HzRMS        = ones(length(P2HzAMP))
-    P5HzRMS        = ones(length(P2HzAMP))
+    PAMP        = ones(length(CompList) * length(LayList) * length(MeasList)) # number of rows
+    PRMS        = ones(length(PAMP))
+    
     count       = [1]
     # loop through the above - create a table output! :) 
     for iComp = 1:length(CompList)
         # pull out groups from ratio table
-        G1_2Hz = Stat2[Stat2[!,:Group] .== CompList[iComp][1:3] ,:]
-        G2_2Hz = Stat2[Stat2[!,:Group] .== CompList[iComp][8:10],:]
-        G1_5Hz = Stat5[Stat5[!,:Group] .== CompList[iComp][1:3] ,:]
-        G2_5Hz = Stat5[Stat5[!,:Group] .== CompList[iComp][8:10],:]
+        G1 = StatTab[StatTab[!,:Group] .== CompList[iComp][1:3] ,:]
+        G2 = StatTab[StatTab[!,:Group] .== CompList[iComp][8:10],:]
 
         for iMeas = 1:length(MeasList)
             # pull out the measurment for those groups
-            G1_2Hz_meas = G1_2Hz[G1_2Hz[!,:Measurement] .== MeasList[iMeas],:]
-            G2_2Hz_meas = G2_2Hz[G2_2Hz[!,:Measurement] .== MeasList[iMeas],:]
-            G1_5Hz_meas = G1_5Hz[G1_5Hz[!,:Measurement] .== MeasList[iMeas],:]
-            G2_5Hz_meas = G2_5Hz[G2_5Hz[!,:Measurement] .== MeasList[iMeas],:]
+            G1_meas = G1[G1[!,:Measurement] .== MeasList[iMeas],:]
+            G2_meas = G2[G2[!,:Measurement] .== MeasList[iMeas],:]
 
             for iLay = 1:length(LayList)
-                # further pull out each layer definition
-                G1_2Hz_lay = G1_2Hz_meas[G1_2Hz_meas[!,:Layer] .== LayList[iLay],:]
-                G2_2Hz_lay = G2_2Hz_meas[G2_2Hz_meas[!,:Layer] .== LayList[iLay],:]
-                G1_5Hz_lay = G1_5Hz_meas[G1_5Hz_meas[!,:Layer] .== LayList[iLay],:]
-                G2_5Hz_lay = G2_5Hz_meas[G2_5Hz_meas[!,:Layer] .== LayList[iLay],:]
+                # further pull out each layer definition       
+                G1_lay = G1_meas[G1_meas[!,:Layer] .== LayList[iLay],:]
+                G2_lay = G2_meas[G2_meas[!,:Layer] .== LayList[iLay],:]
 
                 # find the p value outcome for this comparison at both stimuli conditions
-                P2HzAMP[count[1]] = pvalue(UnequalVarianceTTest(G1_2Hz_lay[!,:RatioAMP],G2_2Hz_lay[!,:RatioAMP]))
-                P5HzAMP[count[1]] = pvalue(UnequalVarianceTTest(G1_5Hz_lay[!,:RatioAMP],G2_5Hz_lay[!,:RatioAMP]))
-                P2HzRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_2Hz_lay[!,:RatioRMS],G2_2Hz_lay[!,:RatioRMS]))
-                P5HzRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_5Hz_lay[!,:RatioRMS],G2_5Hz_lay[!,:RatioRMS]))
+                PAMP[count[1]] = pvalue(UnequalVarianceTTest(G1_lay[!,:RatioAMP],G2_lay[!,:RatioAMP]))
+                PRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_lay[!,:RatioRMS],G2_lay[!,:RatioRMS]))
+
                 count[1] = count[1] + 1
                 # store the appropriate tags at the same positions in their respective lists
                 push!(Comparison,CompList[iComp])
@@ -52,93 +44,68 @@ function PeakRatio_Between(data,Stat2,Stat5,trialtype="TA")
         end # measurement type
     end # comparison of which groups
 
-    BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, P2HzAMP=P2HzAMP, P5HzAMP=P5HzAMP, P2HzRMS=P2HzRMS, P5HzRMS=P5HzRMS)
+    BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, PAMP=PAMP, PRMS=PRMS)
 
     foldername = "AvrecPeakStats"
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "Ratio_BetweenGroups_" * trialtype
+    title = "Ratio_BetweenGroups_" * whichstim * "_" * trialtype
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end
 
-function PeakRatio_Within(data,Stat2,Stat5,trialtype="TA")
+function PeakRatio_Within(data,StatTab,whichstim="2Hz",trialtype="TA")
     # Input: folder path data, table for ratio of 2 hz and 5 hz, all groups being tested
     # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the ratio of final to first peak response between each measurement to the first
 
     # Setup for simple 2 sample t test from HypothesisTests ->
     # 4 within group comparisons per group across 5 measurement types and 5 layers:
     GroupList    = ["KIC" "KIT" "KIV"]
-    LayList     = unique(Stat2[!,:Layer])
-    MeasList    = unique(Stat2[!,:Measurement])
+    LayList     = unique(StatTab[!,:Layer])
+    MeasList    = unique(StatTab[!,:Measurement])
     # containers for the table columns: 
     Group       = String[]
     Layer       = String[]
     # Measurement = String[]   
-    P2Hz_Prev1_AMP  = ones(length(GroupList) * length(LayList)) # number of rows (more columns this time)
-    P2Hz_Prev2_AMP  = ones(length(P2Hz_Prev1_AMP))
-    P2Hz_Prev3_AMP  = ones(length(P2Hz_Prev1_AMP))
-    P2Hz_Prev4_AMP  = ones(length(P2Hz_Prev1_AMP))
-    P5Hz_Prev1_AMP  = ones(length(P2Hz_Prev1_AMP))
-    P5Hz_Prev2_AMP  = ones(length(P2Hz_Prev1_AMP))
-    P5Hz_Prev3_AMP  = ones(length(P2Hz_Prev1_AMP))
-    P5Hz_Prev4_AMP  = ones(length(P2Hz_Prev1_AMP))
+    Prev1_AMP  = ones(length(GroupList) * length(LayList)) # number of rows (more columns this time)
+    Prev2_AMP  = ones(length(Prev1_AMP))
+    Prev3_AMP  = ones(length(Prev1_AMP))
+    Prev4_AMP  = ones(length(Prev1_AMP))
 
-    P2Hz_Prev1_RMS  = ones(length(P2Hz_Prev1_AMP))
-    P2Hz_Prev2_RMS  = ones(length(P2Hz_Prev1_RMS))
-    P2Hz_Prev3_RMS  = ones(length(P2Hz_Prev1_RMS))
-    P2Hz_Prev4_RMS  = ones(length(P2Hz_Prev1_RMS))
-    P5Hz_Prev1_RMS  = ones(length(P2Hz_Prev1_RMS))
-    P5Hz_Prev2_RMS  = ones(length(P2Hz_Prev1_RMS))
-    P5Hz_Prev3_RMS  = ones(length(P2Hz_Prev1_RMS))
-    P5Hz_Prev4_RMS  = ones(length(P2Hz_Prev1_RMS))
+    Prev1_RMS  = ones(length(Prev1_AMP))
+    Prev2_RMS  = ones(length(Prev1_AMP))
+    Prev3_RMS  = ones(length(Prev1_AMP))
+    Prev4_RMS  = ones(length(Prev1_AMP))
 
     count       = [1]
     # loop through the above - create a table output! :) 
     for iGrp = 1:length(GroupList)
         # pull out groups from ratio table
-        G_2Hz = Stat2[Stat2[!,:Group] .== GroupList[iGrp],:]
-        G_5Hz = Stat5[Stat5[!,:Group] .== GroupList[iGrp],:]
+        Gr_Stat = StatTab[StatTab[!,:Group] .== GroupList[iGrp],:]
 
         for iLay = 1:length(LayList)
             # pull out the layer one at a time
-            G_2Hz_lay = G_2Hz[G_2Hz[!,:Layer] .== LayList[iLay],:]
-            G_5Hz_lay = G_5Hz[G_5Hz[!,:Layer] .== LayList[iLay],:]
+            Gr_lay = Gr_Stat[Gr_Stat[!,:Layer] .== LayList[iLay],:]
 
             # further pull out each measurement all together
-            G1_2Hz_Pre = G_2Hz_lay[G_2Hz_lay[!,:Measurement] .== MeasList[1],:]
-            G1_2Hz_1   = G_2Hz_lay[G_2Hz_lay[!,:Measurement] .== MeasList[2],:]
-            G1_2Hz_2   = G_2Hz_lay[G_2Hz_lay[!,:Measurement] .== MeasList[3],:]
-            G1_2Hz_3   = G_2Hz_lay[G_2Hz_lay[!,:Measurement] .== MeasList[4],:]
-            G1_2Hz_4   = G_2Hz_lay[G_2Hz_lay[!,:Measurement] .== MeasList[5],:]
-
-            G1_5Hz_Pre = G_5Hz_lay[G_5Hz_lay[!,:Measurement] .== MeasList[1],:]
-            G1_5Hz_1   = G_5Hz_lay[G_5Hz_lay[!,:Measurement] .== MeasList[2],:]
-            G1_5Hz_2   = G_5Hz_lay[G_5Hz_lay[!,:Measurement] .== MeasList[3],:]
-            G1_5Hz_3   = G_5Hz_lay[G_5Hz_lay[!,:Measurement] .== MeasList[4],:]
-            G1_5Hz_4   = G_5Hz_lay[G_5Hz_lay[!,:Measurement] .== MeasList[5],:]
+            Gr_Pre = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[1],:]
+            Gr_1   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[2],:]
+            Gr_2   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[3],:]
+            Gr_3   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[4],:]
+            Gr_4   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[5],:]
 
             # find the p value outcome for group between measurements
-            P2Hz_Prev1_AMP[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RatioAMP], G1_2Hz_1[!,:RatioAMP]))
-            P2Hz_Prev2_AMP[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RatioAMP], G1_2Hz_2[!,:RatioAMP]))
-            P2Hz_Prev3_AMP[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RatioAMP], G1_2Hz_3[!,:RatioAMP]))
-            P2Hz_Prev4_AMP[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RatioAMP], G1_2Hz_4[!,:RatioAMP]))
+            Prev1_AMP[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[!,:RatioAMP], Gr_1[!,:RatioAMP]))
+            Prev2_AMP[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[!,:RatioAMP], Gr_2[!,:RatioAMP]))
+            Prev3_AMP[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[!,:RatioAMP], Gr_3[!,:RatioAMP]))
+            Prev4_AMP[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[!,:RatioAMP], Gr_4[!,:RatioAMP]))
 
-            P5Hz_Prev1_AMP[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RatioAMP], G1_5Hz_1[!,:RatioAMP]))
-            P5Hz_Prev2_AMP[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RatioAMP], G1_5Hz_2[!,:RatioAMP]))
-            P5Hz_Prev3_AMP[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RatioAMP], G1_5Hz_3[!,:RatioAMP]))
-            P5Hz_Prev4_AMP[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RatioAMP], G1_5Hz_4[!,:RatioAMP]))
+            Prev1_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[!,:RatioRMS], Gr_1[!,:RatioRMS]))
+            Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[!,:RatioRMS], Gr_2[!,:RatioRMS]))
+            Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[!,:RatioRMS], Gr_3[!,:RatioRMS]))
+            Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[!,:RatioRMS], Gr_4[!,:RatioRMS]))
 
-            P2Hz_Prev1_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RatioRMS], G1_2Hz_1[!,:RatioRMS]))
-            P2Hz_Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RatioRMS], G1_2Hz_2[!,:RatioRMS]))
-            P2Hz_Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RatioRMS], G1_2Hz_3[!,:RatioRMS]))
-            P2Hz_Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_2Hz_Pre[!,:RatioRMS], G1_2Hz_4[!,:RatioRMS]))
-
-            P5Hz_Prev1_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RatioRMS], G1_5Hz_1[!,:RatioRMS]))
-            P5Hz_Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RatioRMS], G1_5Hz_2[!,:RatioRMS]))
-            P5Hz_Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RatioRMS], G1_5Hz_3[!,:RatioRMS]))
-            P5Hz_Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(G1_5Hz_Pre[!,:RatioRMS], G1_5Hz_4[!,:RatioRMS]))
             
             count[1] = count[1] + 1
             # store the appropriate tags at the same positions in their respective lists
@@ -148,13 +115,13 @@ function PeakRatio_Within(data,Stat2,Stat5,trialtype="TA")
         end # layer
     end # comparison of which groups
 
-    BetweenGroup = DataFrame(Group=Group, Layer=Layer, P2Hz_Prev1_AMP=P2Hz_Prev1_AMP, P2Hz_Prev2_AMP=P2Hz_Prev2_AMP, P2Hz_Prev3_AMP=P2Hz_Prev3_AMP, P2Hz_Prev4_AMP=P2Hz_Prev4_AMP, P5Hz_Prev1_AMP=P5Hz_Prev1_AMP, P5Hz_Prev2_AMP=P5Hz_Prev2_AMP, P5Hz_Prev3_AMP=P5Hz_Prev3_AMP, P5Hz_Prev4_AMP=P5Hz_Prev4_AMP, P2Hz_Prev1_RMS=P2Hz_Prev1_RMS, P2Hz_Prev2_RMS=P2Hz_Prev2_RMS, P2Hz_Prev3_RMS=P2Hz_Prev3_RMS, P2Hz_Prev4_RMS=P2Hz_Prev4_RMS, P5Hz_Prev1_RMS=P5Hz_Prev1_RMS, P5Hz_Prev2_RMS=P5Hz_Prev2_RMS, P5Hz_Prev3_RMS=P5Hz_Prev3_RMS, P5Hz_Prev4_RMS=P5Hz_Prev4_RMS)
+    BetweenGroup = DataFrame(Group=Group, Layer=Layer, Prev1_AMP=Prev1_AMP, Prev2_AMP=Prev2_AMP, Prev3_AMP=Prev3_AMP, Prev4_AMP=Prev4_AMP, Prev1_RMS=Prev1_RMS, Prev2_RMS=Prev2_RMS, Prev3_RMS=Prev3_RMS, Prev4_RMS=Prev4_RMS)
 
     foldername = "AvrecPeakStats"
     if !isdir(joinpath(data,foldername))
         mkdir(joinpath(data,foldername))
     end
-    title = "Ratio_WithinGroups_" * trialtype
+    title = "Ratio_WithinGroups_" * whichstim * "_" * trialtype
     name = joinpath(data,foldername,title) * ".csv"
     CSV.write(name, BetweenGroup)
 end
