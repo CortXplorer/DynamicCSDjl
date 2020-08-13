@@ -9,6 +9,8 @@ data    = joinpath(home,"Data")
 include(joinpath(func,"AvrecPeakPlots.jl"))
 include(joinpath(func,"AvrecPeakStats.jl"))
 
+savetype = ".pdf" # choose how all figures are saved, default ".pdf"
+
 # Load in data from matlab table csv file which contains 2 and 5 hz peak amp and latency. 
 PeakDataTA = CSV.File("AVRECPeakData.csv") |> DataFrame # trial average
 PeakDataST = CSV.File("AVRECPeakDataST.csv") |> DataFrame # single trial
@@ -24,12 +26,12 @@ KIV2, KIV5 = KIV[KIV[!,:ClickFreq] .== 2,:], KIV[KIV[!,:ClickFreq] .== 5,:]
 
 ## Box Plots First ### 
 # Output: figures in folder AvrecPeakPlots_againstMeasurement/_againstLayer of Peak Amplitude over measurement/layer per layer/measurement
-AvrecPeakvsMeas(figs,KIC2,KIC5,"KIC")
-AvrecPeakvsMeas(figs,KIT2,KIT5,"KIT")
-AvrecPeakvsMeas(figs,KIV2,KIV5,"KIV")
-AvrecPeakvsLay(figs,KIC2,KIC5,"KIC")
-AvrecPeakvsLay(figs,KIT2,KIT5,"KIT")
-AvrecPeakvsLay(figs,KIV2,KIV5,"KIV")
+AvrecPeakvsMeas(figs,KIC2,KIC5,"KIC",savetype)
+AvrecPeakvsMeas(figs,KIT2,KIT5,"KIT",savetype)
+AvrecPeakvsMeas(figs,KIV2,KIV5,"KIV",savetype)
+AvrecPeakvsLay(figs,KIC2,KIC5,"KIC",savetype)
+AvrecPeakvsLay(figs,KIT2,KIT5,"KIT",savetype)
+AvrecPeakvsLay(figs,KIV2,KIV5,"KIV",savetype)
 
 
 ### Now Stats ###
@@ -46,13 +48,13 @@ for ipeak = 1:length(peaks)
 
     if ipeak <= 2
         Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== ipeak,:]
-        Avrec1Peak(figs,Stat2,whichpeak,"2Hz","TA")
+        Avrec1Peak(figs,Stat2,whichpeak,"2Hz",savetype,"TA")
         Peak1_Between(data,Stat2,whichpeak,"2Hz","TA")
         Peak1_Within(data,Stat2,whichpeak,"2Hz","TA")
     end
 
     Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== ipeak,:]
-    Avrec1Peak(figs,Stat5,whichpeak,"5Hz","TA")
+    Avrec1Peak(figs,Stat5,whichpeak,"5Hz",savetype,"TA")
     Peak1_Between(data,Stat5,whichpeak,"5Hz","TA")
     Peak1_Within(data,Stat5,whichpeak,"5Hz","TA")
 end
@@ -96,13 +98,13 @@ for ipeak = 1:length(peaks)
 
     if ipeak <= 2
         Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== ipeak,:]
-        Avrec1Peak(figs,Stat2,whichpeak,"2Hz","ST")
+        Avrec1Peak(figs,Stat2,whichpeak,"2Hz",savetype,"ST")
         Peak1_Between(data,Stat2,whichpeak,"2Hz","ST")
         Peak1_Within(data,Stat2,whichpeak,"2Hz","ST")
     end
 
     Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== ipeak,:]
-    Avrec1Peak(figs,Stat5,whichpeak,"5Hz","ST")
+    Avrec1Peak(figs,Stat5,whichpeak,"5Hz",savetype,"ST")
     Peak1_Between(data,Stat5,whichpeak,"5Hz","ST")
     Peak1_Within(data,Stat5,whichpeak,"5Hz","ST")
 end
