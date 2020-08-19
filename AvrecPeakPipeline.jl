@@ -124,7 +124,7 @@ Ratio5RMS = Last5[!,:RMS] ./ Stat5[!,:RMS]
 Stat2.RatioAMP, Stat2.RatioRMS = Ratio2AMP, Ratio2RMS
 Stat5.RatioAMP, Stat5.RatioRMS = Ratio5AMP, Ratio5RMS
 
-AvrecPeakRatio(figs,Stat2,Stat5,"ST")
+AvrecPeakRatio(figs,Stat2,Stat5, savetype,"ST")
 PeakRatio_Between(data,Stat2,"2Hz")
 PeakRatio_Within(data,Stat2,"2Hz")
 PeakRatio_Between(data,Stat5,"5Hz")
