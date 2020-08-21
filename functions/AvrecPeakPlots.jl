@@ -160,3 +160,38 @@ function Avrec1Peak(figs,Tab,whichpeak="First",whichstim="2Hz",savetype=".pdf",t
 
     end
 end
+
+function AvrecScatter(figs,Scat,whichstim="2Hz",savetype=".pdf",trialtype="TA")
+
+    foldername = "AvrecScatter"
+    if !isdir(joinpath(figs,foldername))
+        mkdir(joinpath(figs,foldername))
+    end
+
+    MeasList = unique(Scat[!,:Measurement])
+    LayList  = unique(Scat[!,:Layer])
+    for iMeas = 1:length(MeasList)
+        ### per measurement ###
+        Scat_Meas = Scat[Scat[!,:Measurement] .== MeasList[iMeas],:]
+        
+        for iLay = 1:length(LayList)
+            Scat_Lay = Scat_Meas[Scat_Meas[!,:Layer] .== LayList[iLay],:]
+            # edit peak latency time to be after each stim time 
+            if whichstim == "2Hz"
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==2,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 2,:PeakLat] .+ 500
+            elseif whichstim == "5Hz"
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==2,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 2,:PeakLat] .+ 200
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==3,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 3,:PeakLat] .+ 400
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==4,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 4,:PeakLat] .+ 600
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==5,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 5,:PeakLat] .+ 800
+            end
+
+            Title = "PeakAmp against Latency " * LayList[iLay] * " " * MeasList[iMeas] * " at " * whichstim * " " * trialtype
+            scatterplot = @df Scat_Lay scatter(:PeakLat, :PeakAmp, group = :Group, alpha=0.75)
+        
+            name = joinpath(figs,foldername,Title) * savetype
+            savefig(scatterplot, name);
+            
+        end # layer
+    end # measurement
+end # function

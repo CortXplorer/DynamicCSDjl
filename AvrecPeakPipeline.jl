@@ -84,6 +84,10 @@ PeakRatio_Within(data,Stat2,"2Hz")
 PeakRatio_Between(data,Stat5,"5Hz")
 PeakRatio_Within(data,Stat5,"5Hz")
 
+# Scatter Plots for visualization and possibly use for Brown Forsythe stats overlay
+AvrecScatter(figs,Stim2Hz,"2Hz",savetype,"TA")
+AvrecScatter(figs,Stim5Hz,"5Hz",savetype,"TA")
+
 
 # Single Trials ----------------------------------------------------------------------------
 
@@ -129,3 +133,7 @@ PeakRatio_Between(data,Stat2,"2Hz","ST")
 PeakRatio_Within(data,Stat2,"2Hz","ST")
 PeakRatio_Between(data,Stat5,"5Hz","ST")
 PeakRatio_Within(data,Stat5,"5Hz","ST")
+
+# Scatter Plots for visualization and possibly use for Brown Forsythe stats overlay
+AvrecScatter(figs,Stim2Hz,"2Hz",savetype,"ST")
+AvrecScatter(figs,Stim5Hz,"5Hz",savetype,"ST")
