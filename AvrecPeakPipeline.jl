@@ -14,6 +14,7 @@ savetype = ".pdf" # choose how all figures are saved, default ".pdf"
 # Load in data from matlab table csv file which contains 2 and 5 hz peak amp and latency. 
 PeakDataTA = CSV.File("AVRECPeakData.csv") |> DataFrame # trial average
 PeakDataST = CSV.File("AVRECPeakDataST.csv") |> DataFrame # single trial
+PeakDataSTRatio = CSV.File("AVRECPeakDataSTFull.csv") |> DataFrame # single trial, no skipped peaks
 
 # seperate by group
 KIC = PeakDataTA[PeakDataTA[!,:Group] .== "KIC",:]
@@ -113,7 +114,14 @@ for ipeak = 1:length(peaks)
     Peak1_Within(data,Stat5,whichpeak,"5Hz","ST")
 end
 
+# Scatter Plots for visualization and possibly use for Brown Forsythe stats overlay
+AvrecScatter(figs,Stim2Hz,"2Hz",savetype,"ST")
+AvrecScatter(figs,Stim5Hz,"5Hz",savetype,"ST")
+
 ### Peak Ratio of Last/First response
+Stim2Hz = PeakDataSTRatio[PeakDataSTRatio[!,:ClickFreq] .== 2,:]
+Stim5Hz = PeakDataSTRatio[PeakDataSTRatio[!,:ClickFreq] .== 5,:]
+
 # seperate the 1st and last click
 Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 1,:]
 Last2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 2,:]
@@ -133,7 +141,3 @@ PeakRatio_Between(data,Stat2,"2Hz","ST")
 PeakRatio_Within(data,Stat2,"2Hz","ST")
 PeakRatio_Between(data,Stat5,"5Hz","ST")
 PeakRatio_Within(data,Stat5,"5Hz","ST")
-
-# Scatter Plots for visualization and possibly use for Brown Forsythe stats overlay
-AvrecScatter(figs,Stim2Hz,"2Hz",savetype,"ST")
-AvrecScatter(figs,Stim5Hz,"5Hz",savetype,"ST")

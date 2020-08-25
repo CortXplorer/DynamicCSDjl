@@ -187,7 +187,7 @@ function AvrecScatter(figs,Scat,whichstim="2Hz",savetype=".pdf",trialtype="TA")
             end
 
             Title = "PeakAmp against Latency " * LayList[iLay] * " " * MeasList[iMeas] * " at " * whichstim * " " * trialtype
-            scatterplot = @df Scat_Lay scatter(:PeakLat, :PeakAmp, group = :Group, alpha=0.75)
+            scatterplot = @df Scat_Lay scatter(:PeakLat, :PeakAmp, group = :Group, markersize=3, markerstrokewidth=0, markerstrokealpha=0, markerstrokecolor = :tab10)
         
             name = joinpath(figs,foldername,Title) * savetype
             savefig(scatterplot, name);
