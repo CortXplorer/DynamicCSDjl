@@ -26,8 +26,9 @@ for iTyp = 1:length(stimtype)
         println("Amplitude Modulation")
     end
 
-    filter(row -> ! isnan(row.PeakAmp), PeakDatTA)
-    filter(row -> ! isnan(row.PeakAmp), PeakDatST)
+    PeakDatTA = filter(row -> ! isnan(row.PeakAmp), PeakDatTA)
+    PeakDatST = filter(row -> ! isnan(row.PeakAmp), PeakDatST)
+    # NOTE: currently rms is only being calculated for where a peak was found, need to fix this actually, at 10 hz and in AMs, often no peak found
 
     # seperate by group
     KIC = PeakDatTA[PeakDatTA[!,:Group] .== "KIC",:]
@@ -65,28 +66,34 @@ for iTyp = 1:length(stimtype)
     AvrecPeakvsLay(figs,KIV10,"KIV","10Hz",savetype)
 
     ### Now Stats ###
-    # Average Trials ---------------------------------------------------------------------------
+    # Average Trials -----------------------------------------------------------------------
 
     # seperate just stimulus presentation from full table
     Stim2Hz = PeakDatTA[PeakDatTA[!,:ClickFreq] .== 2,:]
     Stim5Hz = PeakDatTA[PeakDatTA[!,:ClickFreq] .== 5,:]
+    Stim10Hz = PeakDatTA[PeakDatTA[!,:ClickFreq] .== 10,:]
 
     ## Peak Amp/Lat/RMS response difference
-    peaks = ["First" "Second" "Third" "Fourth" "Fifth"]
+    peaks = ["1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" "10th"]
     for ipeak = 1:length(peaks)
         whichpeak = peaks[ipeak]
 
         if ipeak <= 2
-            Stat2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== ipeak,:]
-            Avrec1Peak(figs,Stat2,whichpeak,"2Hz",savetype,"TA")
-            Peak1_Between(data,Stat2,whichpeak,"2Hz","TA")
-            Peak1_Within(data,Stat2,whichpeak,"2Hz","TA")
+            Stat2 = Stim2Hz[Stim2Hz[!,:OrderofClick] .== ipeak,:]
+            Avrec1Peak(figs,Stat2,whichpeak,"2Hz",savetype,stimtype[iTyp],"TA")
+            Peak1_Between(data,Stat2,whichpeak,"2Hz",stimtype[iTyp],"TA")
+            Peak1_Within(data,Stat2,whichpeak,"2Hz",stimtype[iTyp],"TA")
         end
-
-        Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== ipeak,:]
-        Avrec1Peak(figs,Stat5,whichpeak,"5Hz",savetype,"TA")
-        Peak1_Between(data,Stat5,whichpeak,"5Hz","TA")
-        Peak1_Within(data,Stat5,whichpeak,"5Hz","TA")
+        if ipeak <= 5
+            Stat5 = Stim5Hz[Stim5Hz[!,:OrderofClick] .== ipeak,:]
+            Avrec1Peak(figs,Stat5,whichpeak,"5Hz",savetype,stimtype[iTyp],"TA")
+            Peak1_Between(data,Stat5,whichpeak,"5Hz",stimtype[iTyp],"TA")
+            Peak1_Within(data,Stat5,whichpeak,"5Hz",stimtype[iTyp],"TA")
+        end
+        Stat10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== ipeak,:]
+        Avrec1Peak(figs,Stat10,whichpeak,"10Hz",savetype,stimtype[iTyp],"TA")
+        Peak1_Between(data,Stat10,whichpeak,"10Hz",stimtype[iTyp],"TA")
+        Peak1_Within(data,Stat10,whichpeak,"10Hz",stimtype[iTyp],"TA")
     end
 
     ### Peak Amp/RMS Ratio of Last/First response
@@ -97,17 +104,24 @@ for iTyp = 1:length(stimtype)
     Last2  = Stim2Hz[Stim2Hz[!,:OrderofClick] .== 2,:]
     Stat5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 1,:]
     Last5  = Stim5Hz[Stim5Hz[!,:OrderofClick] .== 5,:]
+    Stat10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== 1,:]
+    Last10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== 10,:]
     # divide the last by first
-    Ratio2AMP = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp]
-    Ratio5AMP = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
-    Ratio2RMS = Last2[!,:RMS] ./ Stat2[!,:RMS]
-    Ratio5RMS = Last5[!,:RMS] ./ Stat5[!,:RMS]
+    Ratio2AMP  = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp]
+    Ratio5AMP  = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
+    Ratio10AMP = Last10[!,:PeakAmp] ./ Stat10[!,:PeakAmp]
+    Ratio2RMS  = Last2[!,:RMS] ./ Stat2[!,:RMS]
+    Ratio5RMS  = Last5[!,:RMS] ./ Stat5[!,:RMS]
+    Ratio10RMS = Last10[!,:RMS] ./ Stat10[!,:RMS]
     # add this column to the table to keep tags
     Stat2.RatioAMP, Stat2.RatioRMS = Ratio2AMP, Ratio2RMS
     Stat5.RatioAMP, Stat5.RatioRMS = Ratio5AMP, Ratio5RMS
+    Stat10.RatioAMP, Stat10.RatioRMS = Ratio10AMP, Ratio10RMS
 
     # cheeky plots first;
-    AvrecPeakRatio(figs,Stat2,Stat5)
+    AvrecPeakRatio(figs,Stat2,"2Hz",savetype,stimtype[iTyp],"TA")
+    AvrecPeakRatio(figs,Stat5,"5Hz",savetype,stimtype[iTyp],"TA")
+    AvrecPeakRatio(figs,Stat10,"10Hz",savetype,stimtype[iTyp],"TA")
     # And stats for overlay
     PeakRatio_Between(data,Stat2,"2Hz")
     PeakRatio_Within(data,Stat2,"2Hz")
@@ -117,9 +131,10 @@ for iTyp = 1:length(stimtype)
     # Scatter Plots for visualization and possibly use for Brown Forsythe stats overlay
     AvrecScatter(figs,Stim2Hz,"2Hz",savetype,"TA")
     AvrecScatter(figs,Stim5Hz,"5Hz",savetype,"TA")
+    AvrecScatter(figs,Stim10hz,"10Hz",savetype,"TA")
 
 
-    # Single Trials ----------------------------------------------------------------------------
+    # Single Trials ------------------------------------------------------------------------
 
     # seperate just stimulus presentation from full table
     Stim2Hz = PeakDatST[PeakDatST[!,:ClickFreq] .== 2,:]

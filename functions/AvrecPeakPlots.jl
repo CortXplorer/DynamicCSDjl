@@ -77,7 +77,7 @@ function AvrecPeakvsMeas(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf",stim
 end
 
 
-function AvrecPeakRatio(figs,Tab2,Tab5,savetype=".pdf",trialtype="TA")
+function AvrecPeakRatio(figs,Tab,whichstim="2Hz",savetype=".pdf",stimtype="CL",trialtype="TA")
     # Input: folder path figs, table for ratio of 2 hz and 5 hz, all groups being plotted
     # Output: figures in folder AvrecPeakRatio of the level of synaptic depression shown as a function of the last divided by the first response peak amplitude
  
@@ -86,40 +86,27 @@ function AvrecPeakRatio(figs,Tab2,Tab5,savetype=".pdf",trialtype="TA")
         mkdir(joinpath(figs,foldername))
     end
 
-    LayList = unique(Tab2[!,:Layer])
+    LayList = unique(Tab[!,:Layer])
 
     for iLay = 1:length(LayList)
         ### peak amp by measurement per Layer ###
-        Tab2_Sort = Tab2[Tab2[!,:Layer] .== LayList[iLay],:]
-        Tab5_Sort = Tab5[Tab5[!,:Layer] .== LayList[iLay],:]
+        Tab_Sort = Tab[Tab[!,:Layer] .== LayList[iLay],:]
 
-        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 2 Hz Peak Amplitude "
-        ratioplot = @df Tab2_Sort groupedboxplot(:Measurement, :RatioAMP, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+        Title = "Synaptic dep ratio of " * LayList[iLay] * " at " * whichstim * " Peak Amplitude " * stimtype
+        ratioplot = @df Tab_Sort groupedboxplot(:Measurement, :RatioAMP, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
 
-        name = joinpath(figs,foldername,Title) * trialtype * savetype
+        name = joinpath(figs,foldername,Title) * " " * trialtype * savetype
         savefig(ratioplot, name);
 
-        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 5 Hz Peak Amplitude "
-        avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :RatioAMP, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
-
-        name = joinpath(figs,foldername,Title) * trialtype * savetype
-        savefig(avrecplot, name);
-
-        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 2 Hz RMS "
+        Title = "Synaptic dep ratio of " * LayList[iLay] * " at " * whichstim * " RMS " * stimtype
         ratioplot = @df Tab2_Sort groupedboxplot(:Measurement, :RatioRMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak RMS")
 
-        name = joinpath(figs,foldername,Title) * trialtype * savetype
+        name = joinpath(figs,foldername,Title) * " " * trialtype * savetype
         savefig(ratioplot, name);
-
-        Title = "Synaptic dep ratio of " * LayList[iLay] * " at 5 Hz RMS "
-        avrecplot = @df Tab5_Sort groupedboxplot(:Measurement, :RatioRMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak RMS")
-
-        name = joinpath(figs,foldername,Title) * trialtype * savetype
-        savefig(avrecplot, name);
     end
 end
 
-function Avrec1Peak(figs,Tab,whichpeak="First",whichstim="2Hz",savetype=".pdf",trialtype="TA")
+function Avrec1Peak(figs,Tab,whichpeak="1st",whichstim="2Hz",savetype=".pdf",stimtype="CL",trialtype="TA")
     # Input: folder path figs, table for peak amp/lat of 2 hz and 5 hz, all groups being plotted
     # Output: figures in folder Avrec1stPeak of the first peak response and latency for all groups
 
@@ -134,19 +121,19 @@ function Avrec1Peak(figs,Tab,whichpeak="First",whichstim="2Hz",savetype=".pdf",t
         ### peak amp by measurement per Layer ###
         Tab_Sort = Tab[Tab[!,:Layer] .== LayList[iLay],:]
 
-        Title = whichpeak * " peak amplitude of " * LayList[iLay] * " at " * whichstim * " "
+        Title = whichpeak * " peak amplitude of " * LayList[iLay] * " at " * whichstim * " " * stimtype * " "
         ratioplot = @df Tab_Sort groupedboxplot(:Measurement, :PeakAmp, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
 
         name = joinpath(figs,foldername,Title) * trialtype * savetype
         savefig(ratioplot, name);
 
-        Title = whichpeak * " peak latency of " * LayList[iLay] * " at " * whichstim * " "
+        Title = whichpeak * " peak latency of " * LayList[iLay] * " at " * whichstim * " " * stimtype * " "
         ratioplot = @df Tab_Sort groupedboxplot(:Measurement, :PeakLat, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
 
         name = joinpath(figs,foldername,Title) * trialtype * savetype
         savefig(ratioplot, name);
 
-        Title = whichpeak * " RMS of " * LayList[iLay] * " at " * whichstim * " "
+        Title = whichpeak * " RMS of " * LayList[iLay] * " at " * whichstim * " " * stimtype * " "
         ratioplot = @df Tab_Sort groupedboxplot(:Measurement, :RMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
 
         name = joinpath(figs,foldername,Title) * trialtype * savetype
