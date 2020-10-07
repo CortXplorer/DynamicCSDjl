@@ -17,18 +17,12 @@ for iTyp = 1:length(stimtype)
     if stimtype[iTyp] == "CL"
         PeakDatTA = CSV.File("AVRECPeakCL.csv") |> DataFrame # trial average
         PeakDatST = CSV.File("AVRECPeakCLST.csv") |> DataFrame # single trial
-        PeakDatSTRatio = CSV.File("AVRECPeakCLST.csv") |> DataFrame # single trial, no skipped peaks
         println("Click Trains")
     elseif stimtype[iTyp] == "AM"
         PeakDatTA = CSV.File("AVRECPeakAM.csv") |> DataFrame # trial average
         PeakDatST = CSV.File("AVRECPeakAMST.csv") |> DataFrame # single trial
-        PeakDatSTRatio = CSV.File("AVRECPeakAMST.csv") |> DataFrame # single trial, no skipped peaks
         println("Amplitude Modulation")
     end
-
-    PeakDatTA = filter(row -> ! isnan(row.PeakAmp), PeakDatTA)
-    PeakDatST = filter(row -> ! isnan(row.PeakAmp), PeakDatST)
-    # NOTE: currently rms is only being calculated for where a peak was found, need to fix this actually, at 10 hz and in AMs, often no peak found
 
     # seperate by group
     KIC = PeakDatTA[PeakDatTA[!,:Group] .== "KIC",:]
