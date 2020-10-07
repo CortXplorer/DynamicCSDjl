@@ -94,15 +94,17 @@ function AvrecPeakRatio(figs,Tab,whichstim="2Hz",savetype=".pdf",stimtype="CL",t
     for iLay = 1:length(LayList)
         ### peak amp by measurement per Layer ###
         Tab_Sort = Tab[Tab[!,:Layer] .== LayList[iLay],:]
+        Tab_Sortamp = filter(row -> ! isnan(row.RatioAMP), Tab_Sort)
+        Tab_Sortrms = filter(row -> ! isnan(row.RatioRMS), Tab_Sort)
 
         Title = "Synaptic dep ratio of " * LayList[iLay] * " at " * whichstim * " Peak Amplitude " * stimtype
-        ratioplot = @df Tab_Sort groupedboxplot(:Measurement, :RatioAMP, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+        ratioplot = @df Tab_Sortamp groupedboxplot(:Measurement, :RatioAMP, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
 
         name = joinpath(figs,foldername,Title) * " " * trialtype * savetype
         savefig(ratioplot, name);
 
         Title = "Synaptic dep ratio of " * LayList[iLay] * " at " * whichstim * " RMS " * stimtype
-        ratioplot = @df Tab2_Sort groupedboxplot(:Measurement, :RatioRMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak RMS")
+        ratioplot = @df Tab_Sortrms groupedboxplot(:Measurement, :RatioRMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak RMS")
 
         name = joinpath(figs,foldername,Title) * " " * trialtype * savetype
         savefig(ratioplot, name);
@@ -124,6 +126,7 @@ function Avrec1Peak(figs,Tab,whichpeak="1st",whichstim="2Hz",savetype=".pdf",sti
         ### peak amp by measurement per Layer ###
         Tab_Sort = Tab[Tab[!,:Layer] .== LayList[iLay],:]
         Tab_Sortamp = filter(row -> ! isnan(row.PeakAmp), Tab_Sort)
+        Tab_Sortrms = filter(row -> ! isnan(row.RMS), Tab_Sort)
 
         Title = whichpeak * " peak amplitude of " * LayList[iLay] * " at " * whichstim * " " * stimtype * " "
         ratioplot = @df Tab_Sortamp groupedboxplot(:Measurement, :PeakAmp, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
@@ -138,7 +141,7 @@ function Avrec1Peak(figs,Tab,whichpeak="1st",whichstim="2Hz",savetype=".pdf",sti
         savefig(ratioplot, name);
 
         Title = whichpeak * " RMS of " * LayList[iLay] * " at " * whichstim * " " * stimtype * " "
-        ratioplot = @df Tab_Sort groupedboxplot(:Measurement, :RMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
+        ratioplot = @df Tab_Sortrms groupedboxplot(:Measurement, :RMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amp")
 
         name = joinpath(figs,foldername,Title) * trialtype * savetype
         savefig(ratioplot, name);
@@ -146,7 +149,7 @@ function Avrec1Peak(figs,Tab,whichpeak="1st",whichstim="2Hz",savetype=".pdf",sti
     end
 end
 
-function AvrecScatter(figs,Scat,whichstim="2Hz",savetype=".pdf",trialtype="TA")
+function AvrecScatter(figs,Scat,whichstim="2Hz",savetype=".pdf",stimtype="CL",trialtype="TA")
 
     foldername = "AvrecScatter"
     if !isdir(joinpath(figs,foldername))
@@ -170,9 +173,20 @@ function AvrecScatter(figs,Scat,whichstim="2Hz",savetype=".pdf",trialtype="TA")
                 Scat_Lay[Scat_Lay[!,:OrderofClick].==3,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 3,:PeakLat] .+ 400
                 Scat_Lay[Scat_Lay[!,:OrderofClick].==4,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 4,:PeakLat] .+ 600
                 Scat_Lay[Scat_Lay[!,:OrderofClick].==5,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 5,:PeakLat] .+ 800
+            elseif whichstim == "10Hz"
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==2,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 2,:PeakLat] .+ 200
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==3,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 3,:PeakLat] .+ 300
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==4,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 4,:PeakLat] .+ 400
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==5,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 5,:PeakLat] .+ 500
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==3,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 3,:PeakLat] .+ 600
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==4,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 4,:PeakLat] .+ 700
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==5,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 5,:PeakLat] .+ 800
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==3,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 3,:PeakLat] .+ 900
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==4,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 4,:PeakLat] .+ 1000
+                Scat_Lay[Scat_Lay[!,:OrderofClick].==5,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 5,:PeakLat] .+ 1100
             end
 
-            Title = "PeakAmp against Latency " * LayList[iLay] * " " * MeasList[iMeas] * " at " * whichstim * " " * trialtype
+            Title = "PeakAmp against Latency " * LayList[iLay] * " " * MeasList[iMeas] * " at " * whichstim * " " * stimtype * " " * trialtype
             scatterplot = @df Scat_Lay scatter(:PeakLat, :PeakAmp, group = :Group, markersize=3, markerstrokewidth=0, markerstrokealpha=0, markerstrokecolor = :tab10)
         
             name = joinpath(figs,foldername,Title) * savetype
