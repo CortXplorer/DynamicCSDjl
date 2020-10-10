@@ -1,7 +1,7 @@
 using CSV, DataFrames
 using StatsPlots
 using HypothesisTests
-#using Infiltrator
+using Infiltrator
 
 home    = @__DIR__
 func    = joinpath(home,"functions")
@@ -122,6 +122,8 @@ for iTyp = 1:length(stimtype)
     PeakRatio_Within(data,Stat2,"2Hz",stimtype[iTyp],"TA")
     PeakRatio_Between(data,Stat5,"5Hz",stimtype[iTyp],"TA")
     PeakRatio_Within(data,Stat5,"5Hz",stimtype[iTyp],"TA")
+    PeakRatio_Between(data,Stat10,"10Hz",stimtype[iTyp],"TA")
+    PeakRatio_Within(data,Stat10,"10Hz",stimtype[iTyp],"TA")
 
     # Scatter Plots for visualization and possibly use for Brown Forsythe stats overlay
     AvrecScatter(figs,Stim2Hz,"2Hz",savetype,stimtype[iTyp],"TA")
@@ -131,9 +133,9 @@ for iTyp = 1:length(stimtype)
     # Single Trials ------------------------------------------------------------------------
 
     # seperate just stimulus presentation from full table
-    Stim2Hz = PeakDatST[PeakDatST[!,:ClickFreq] .== 2,:]
-    Stim5Hz = PeakDatST[PeakDatST[!,:ClickFreq] .== 5,:]
-    Stim5Hz = PeakDatST[PeakDatST[!,:ClickFreq] .== 10,:]
+    Stim2Hz  = PeakDatST[PeakDatST[!,:ClickFreq] .== 2,:]
+    Stim5Hz  = PeakDatST[PeakDatST[!,:ClickFreq] .== 5,:]
+    Stim10Hz = PeakDatST[PeakDatST[!,:ClickFreq] .== 10,:]
 
     ## Peak Amp response difference
     peaks = ["1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" "10th"]
@@ -144,13 +146,13 @@ for iTyp = 1:length(stimtype)
             Stat2 = Stim2Hz[Stim2Hz[!,:OrderofClick] .== ipeak,:]
             Avrec1Peak(figs,Stat2,whichpeak,"2Hz",savetype,stimtype[iTyp],"ST")
             Peak1_Between(data,Stat2,whichpeak,"2Hz",stimtype[iTyp],"ST")
-            Peak1_Within(data,Stat2,whichpeak,"2Hz",stimtype[iTyp],"ST")
+            Peak1_Within(data,Stat2,whichpeak,"2Hz",stimtype[iTyp],"ST") # note - # trials not the same so not a one but two sample t test
         end
         if ipeak <= 5
             Stat5 = Stim5Hz[Stim5Hz[!,:OrderofClick] .== ipeak,:]
             Avrec1Peak(figs,Stat5,whichpeak,"5Hz",savetype,stimtype[iTyp],"ST")
             Peak1_Between(data,Stat5,whichpeak,"5Hz",stimtype[iTyp],"ST")
-            Peak1_Within(data,Stat5,whichpeak,"5Hz",stimtype[iTyp],"ST")
+            Peak1_Within(data,Stat5,whichpeak,"5Hz",stimtype[iTyp],"ST") # note - # trials not the same so not a one but two sample t test
         end
         Stat10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== ipeak,:]
         Avrec1Peak(figs,Stat10,whichpeak,"10Hz",savetype,stimtype[iTyp],"ST")
@@ -172,7 +174,7 @@ for iTyp = 1:length(stimtype)
     Stat10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== 1,:]
     Last10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== 10,:]
     # divide the last by first
-    Ratio2AMP = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp]
+    Ratio2AMP = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp] 
     Ratio5AMP = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
     Ratio10AMP = Last10[!,:PeakAmp] ./ Stat10[!,:PeakAmp]
     Ratio2RMS = Last2[!,:RMS] ./ Stat2[!,:RMS]
