@@ -29,11 +29,16 @@ function PeakRatio_Between(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype=
             for iLay = 1:length(LayList)
                 # further pull out each layer definition       
                 G1_lay = G1_meas[G1_meas[!,:Layer] .== LayList[iLay],:]
+                G1_layamp = filter(row -> ! isnan(row.RatioAMP), G1_lay)
+                G1_layrms = filter(row -> ! isnan(row.RatioRMS), G1_lay)
                 G2_lay = G2_meas[G2_meas[!,:Layer] .== LayList[iLay],:]
+                G2_layamp = filter(row -> ! isnan(row.RatioAMP), G2_lay)
+                G2_layrms = filter(row -> ! isnan(row.RatioRMS), G2_lay)
 
+                #@info "At comparison $iComp, measurement $iMeas, layer $iLay"
                 # find the p value outcome for this comparison at both stimuli conditions
-                PAMP[count[1]] = pvalue(UnequalVarianceTTest(G1_lay[!,:RatioAMP],G2_lay[!,:RatioAMP]))
-                PRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_lay[!,:RatioRMS],G2_lay[!,:RatioRMS]))
+                PAMP[count[1]] = pvalue(UnequalVarianceTTest(G1_layamp[!,:RatioAMP],G2_layamp[!,:RatioAMP]))
+                PRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_layrms[!,:RatioRMS],G2_layrms[!,:RatioRMS]))
 
                 count[1] = count[1] + 1
                 # store the appropriate tags at the same positions in their respective lists
@@ -168,7 +173,6 @@ function Peak1_Between(data,StatTab,whichpeak="First",whichstim="2Hz",stimtype="
                 G2_layrms = filter(row -> ! isnan(row.RMS), G2_lay)
 
                 # find the p value outcome for this comparison at both stimuli conditions
-                @info "At comparison $iComp, measurement $iMeas, layer $iLay"
                 if isempty(G1_lay) || isempty(G2_lay)
                     continue 
                 end
@@ -238,26 +242,36 @@ function Peak1_Within(data,StatTab,whichpeak="First",whichstim="2Hz",stimtype="C
 
             # further pull out each measurement all together
             Gr_Pre = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[1],:]
+            GP_amp = filter(row -> ! isnan(row.PeakAmp), Gr_Pre)
+            GP_rms = filter(row -> ! isnan(row.RMS), Gr_Pre)
             Gr_1   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[2],:]
+            G1_amp = filter(row -> ! isnan(row.PeakAmp), Gr_1)
+            G1_rms = filter(row -> ! isnan(row.RMS), Gr_1)
             Gr_2   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[3],:]
+            G2_amp = filter(row -> ! isnan(row.PeakAmp), Gr_2)
+            G2_rms = filter(row -> ! isnan(row.RMS), Gr_2)
             Gr_3   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[4],:]
+            G3_amp = filter(row -> ! isnan(row.PeakAmp), Gr_3)
+            G3_rms = filter(row -> ! isnan(row.RMS), Gr_3)
             Gr_4   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[5],:]
+            G4_amp = filter(row -> ! isnan(row.PeakAmp), Gr_4)
+            G4_rms = filter(row -> ! isnan(row.RMS), Gr_4)
 
             # find the p value outcome for group between measurements
-            Prev1_Amp[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:PeakAmp], Gr_1[!,:PeakAmp]))
-            Prev2_Amp[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:PeakAmp], Gr_2[!,:PeakAmp]))
-            Prev3_Amp[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:PeakAmp], Gr_3[!,:PeakAmp]))
-            Prev4_Amp[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:PeakAmp], Gr_4[!,:PeakAmp]))
+            Prev1_Amp[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[!,:PeakAmp], G1_amp[!,:PeakAmp]))
+            Prev2_Amp[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[!,:PeakAmp], G2_amp[!,:PeakAmp]))
+            Prev3_Amp[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[!,:PeakAmp], G3_amp[!,:PeakAmp]))
+            Prev4_Amp[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[!,:PeakAmp], G4_amp[!,:PeakAmp]))
 
-            Prev1_Lat[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:PeakLat], Gr_1[!,:PeakLat]))
-            Prev2_Lat[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:PeakLat], Gr_2[!,:PeakLat]))
-            Prev3_Lat[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:PeakLat], Gr_3[!,:PeakLat]))
-            Prev4_Lat[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:PeakLat], Gr_4[!,:PeakLat]))
+            Prev1_Lat[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[!,:PeakLat], G1_amp[!,:PeakLat]))
+            Prev2_Lat[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[!,:PeakLat], G2_amp[!,:PeakLat]))
+            Prev3_Lat[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[!,:PeakLat], G3_amp[!,:PeakLat]))
+            Prev4_Lat[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[!,:PeakLat], G4_amp[!,:PeakLat]))
 
-            Prev1_RMS[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:RMS], Gr_1[!,:RMS]))
-            Prev2_RMS[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:RMS], Gr_2[!,:RMS]))
-            Prev3_RMS[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:RMS], Gr_3[!,:RMS]))
-            Prev4_RMS[count[1]]  = pvalue(OneSampleTTest(Gr_Pre[!,:RMS], Gr_4[!,:RMS]))
+            Prev1_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[!,:RMS], G1_rms[!,:RMS]))
+            Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[!,:RMS], G2_rms[!,:RMS]))
+            Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[!,:RMS], G3_rms[!,:RMS]))
+            Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[!,:RMS], G4_rms[!,:RMS]))
             
             count[1] = count[1] + 1
             # store the appropriate tags at the same positions in their respective lists
