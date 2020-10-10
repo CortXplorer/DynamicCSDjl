@@ -55,12 +55,10 @@ function AvrecPeakvsMeas(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf",stim
         ### peak amp by measurement per Layer ###
         Tab_Sort    = Tab[Tab[!,:Layer] .== LayList[iLay],:]
         Tab_Sortamp = filter(row -> ! isnan(row.PeakAmp), Tab_Sort)
+        Tab_Sortrms = filter(row -> ! isnan(row.RMS), Tab_Sort)
 
         Title = GroupName * " PeakAmp of " * LayList[iLay] * " at " * whichstim * " " * stimtype
         avrecplot = @df Tab_Sortamp groupedboxplot(:Measurement, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= labels, title=Title, xlab = "Measurement", ylab = "Peak Amplitude");
-
-        name = joinpath(figs,foldername,Title) * savetype
-        savefig(avrecplot, name);
 
         name = joinpath(figs,foldername,Title) * savetype
         savefig(avrecplot, name);
@@ -72,7 +70,7 @@ function AvrecPeakvsMeas(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf",stim
         savefig(avrecplot, name);
 
         Title = GroupName * " RMS of " * LayList[iLay] * " at " * whichstim * " " * stimtype
-        avrecplot = @df Tab_Sort groupedboxplot(:Measurement, :RMS, group = :OrderofClick, bar_position = :dodge, lab= labels, title=Title, xlab = "Measurement", ylab = "Peak Amplitude");
+        avrecplot = @df Tab_Sortrms groupedboxplot(:Measurement, :RMS, group = :OrderofClick, bar_position = :dodge, lab= labels, title=Title, xlab = "Measurement", ylab = "Peak Amplitude");
 
         name = joinpath(figs,foldername,Title) * savetype
         savefig(avrecplot, name);
