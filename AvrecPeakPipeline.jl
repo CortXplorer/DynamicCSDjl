@@ -10,7 +10,7 @@ data    = joinpath(home,"Data")
 include(joinpath(func,"AvrecPeakPlots.jl"))
 include(joinpath(func,"AvrecPeakStats.jl"))
 
-savetype = ".pdf" # choose how all figures are saved, default ".pdf"
+savetype = ".png" # choose how all figures are saved, default ".pdf"
 stimtype = ["CL" "AM"]
 
 for iTyp = 1:length(stimtype)
@@ -36,6 +36,7 @@ for iTyp = 1:length(stimtype)
 
     ## Box Plots First ### 
     # Output: figures in folder AvrecPeakPlots_againstMeasurement/_againstLayer of Peak Amplitude over measurement/layer per layer/measurement
+    println("Peak vs Measurement")
     AvrecPeakvsMeas(figs,KIC2,"KIC","2Hz",savetype,stimtype[iTyp])
     AvrecPeakvsMeas(figs,KIC5,"KIC","5Hz",savetype,stimtype[iTyp])
     AvrecPeakvsMeas(figs,KIC10,"KIC","10Hz",savetype,stimtype[iTyp])
@@ -48,6 +49,7 @@ for iTyp = 1:length(stimtype)
     AvrecPeakvsMeas(figs,KIV5,"KIV","5Hz",savetype,stimtype[iTyp])
     AvrecPeakvsMeas(figs,KIV10,"KIV","10Hz",savetype,stimtype[iTyp])
 
+    println("Peak vs Layer")
     AvrecPeakvsLay(figs,KIC2,"KIC","2Hz",savetype)
     AvrecPeakvsLay(figs,KIC5,"KIC","5Hz",savetype)
     AvrecPeakvsLay(figs,KIC10,"KIC","10Hz",savetype)
@@ -62,11 +64,16 @@ for iTyp = 1:length(stimtype)
 
     ### Now Stats ###
     # Average Trials -----------------------------------------------------------------------
-
+    println("Average Trial Stats")
     # seperate just stimulus presentation from full table
     Stim2Hz = PeakDatTA[PeakDatTA[!,:ClickFreq] .== 2,:]
     Stim5Hz = PeakDatTA[PeakDatTA[!,:ClickFreq] .== 5,:]
     Stim10Hz = PeakDatTA[PeakDatTA[!,:ClickFreq] .== 10,:]
+
+    # remove group KIV for now until it is a proper size
+    Stim2Hz = Stim2Hz[Stim2Hz[!,:Group] .!= "KIV",:]
+    Stim5Hz = Stim5Hz[Stim5Hz[!,:Group] .!= "KIV",:]
+    Stim10Hz = Stim10Hz[Stim10Hz[!,:Group] .!= "KIV",:]
 
     ## Peak Amp/Lat/RMS response difference
     peaks = ["1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" "10th"]
@@ -102,12 +109,12 @@ for iTyp = 1:length(stimtype)
     Stat10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== 1,:]
     Last10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== 10,:]
     # divide the last by first
-    Ratio2AMP  = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp]
-    Ratio5AMP  = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
-    Ratio10AMP = Last10[!,:PeakAmp] ./ Stat10[!,:PeakAmp]
-    Ratio2RMS  = Last2[!,:RMS] ./ Stat2[!,:RMS]
-    Ratio5RMS  = Last5[!,:RMS] ./ Stat5[!,:RMS]
-    Ratio10RMS = Last10[!,:RMS] ./ Stat10[!,:RMS]
+    Ratio2AMP  = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp] .* 100
+    Ratio5AMP  = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp] .* 100
+    Ratio10AMP = Last10[!,:PeakAmp] ./ Stat10[!,:PeakAmp] .* 100
+    Ratio2RMS  = Last2[!,:RMS] ./ Stat2[!,:RMS] .* 100
+    Ratio5RMS  = Last5[!,:RMS] ./ Stat5[!,:RMS] .* 100
+    Ratio10RMS = Last10[!,:RMS] ./ Stat10[!,:RMS] .* 100
     # add this column to the table to keep tags
     Stat2.RatioAMP, Stat2.RatioRMS = Ratio2AMP, Ratio2RMS
     Stat5.RatioAMP, Stat5.RatioRMS = Ratio5AMP, Ratio5RMS
@@ -131,11 +138,16 @@ for iTyp = 1:length(stimtype)
     AvrecScatter(figs,Stim10Hz,"10Hz",savetype,stimtype[iTyp],"TA")
 
     # Single Trials ------------------------------------------------------------------------
-
+    println("Single Trial Stats")
     # seperate just stimulus presentation from full table
     Stim2Hz  = PeakDatST[PeakDatST[!,:ClickFreq] .== 2,:]
     Stim5Hz  = PeakDatST[PeakDatST[!,:ClickFreq] .== 5,:]
     Stim10Hz = PeakDatST[PeakDatST[!,:ClickFreq] .== 10,:]
+
+    # remove group KIV for now until it is a proper size
+    Stim2Hz = Stim2Hz[Stim2Hz[!,:Group] .!= "KIV",:]
+    Stim5Hz = Stim5Hz[Stim5Hz[!,:Group] .!= "KIV",:]
+    Stim10Hz = Stim10Hz[Stim10Hz[!,:Group] .!= "KIV",:]
 
     ## Peak Amp response difference
     peaks = ["1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" "10th"]
@@ -174,12 +186,12 @@ for iTyp = 1:length(stimtype)
     Stat10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== 1,:]
     Last10 = Stim10Hz[Stim10Hz[!,:OrderofClick] .== 10,:]
     # divide the last by first
-    Ratio2AMP = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp] 
-    Ratio5AMP = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp]
-    Ratio10AMP = Last10[!,:PeakAmp] ./ Stat10[!,:PeakAmp]
-    Ratio2RMS = Last2[!,:RMS] ./ Stat2[!,:RMS]
-    Ratio5RMS = Last5[!,:RMS] ./ Stat5[!,:RMS]
-    Ratio10RMS = Last10[!,:RMS] ./ Stat10[!,:RMS]
+    Ratio2AMP = Last2[!,:PeakAmp] ./ Stat2[!,:PeakAmp] .* 100 
+    Ratio5AMP = Last5[!,:PeakAmp] ./ Stat5[!,:PeakAmp] .* 100
+    Ratio10AMP = Last10[!,:PeakAmp] ./ Stat10[!,:PeakAmp] .* 100
+    Ratio2RMS = Last2[!,:RMS] ./ Stat2[!,:RMS] .* 100
+    Ratio5RMS = Last5[!,:RMS] ./ Stat5[!,:RMS] .* 100
+    Ratio10RMS = Last10[!,:RMS] ./ Stat10[!,:RMS] .* 100
     # add this column to the table to keep tags
     Stat2.RatioAMP, Stat2.RatioRMS = Ratio2AMP, Ratio2RMS
     Stat5.RatioAMP, Stat5.RatioRMS = Ratio5AMP, Ratio5RMS
