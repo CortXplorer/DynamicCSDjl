@@ -11,8 +11,8 @@ function PeakRatio_Between(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype=
     Comparison  = String[]
     Layer       = String[]
     Measurement = String[]   
-    PAMP        = ones(length(CompList) * length(LayList) * length(MeasList)) # number of rows
-    PRMS        = ones(length(PAMP))
+    PAMP        = ones(length(CompList) * length(LayList) * length(MeasList)) * -1 # number of rows
+    PRMS        = ones(length(PAMP)) * -1
     
     count       = [1]
     # loop through the above - create a table output! :) 
@@ -35,7 +35,9 @@ function PeakRatio_Between(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype=
                 G2_layamp = filter(row -> ! isnan(row.RatioAMP), G2_lay)
                 G2_layrms = filter(row -> ! isnan(row.RatioRMS), G2_lay)
 
-                #@info "At comparison $iComp, measurement $iMeas, layer $iLay"
+                if isempty(G1_lay) || isempty(G2_lay)
+                    continue 
+                end
                 # find the p value outcome for this comparison at both stimuli conditions
                 PAMP[count[1]] = pvalue(UnequalVarianceTTest(G1_layamp[!,:RatioAMP],G2_layamp[!,:RatioAMP]))
                 PRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_layrms[!,:RatioRMS],G2_layrms[!,:RatioRMS]))
@@ -48,6 +50,9 @@ function PeakRatio_Between(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype=
             end # layer
         end # measurement type
     end # comparison of which groups
+
+    PAMP = PAMP[PAMP .!= -1] # need to remove unused rows that still equal 1
+    PRMS = PRMS[PRMS .!= -1]
 
     BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, PAMP=PAMP, PRMS=PRMS)
 
