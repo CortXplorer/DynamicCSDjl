@@ -9,14 +9,6 @@ function AvrecPeakvsLay(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf")
 
     MeasList = unique(Tab[!,:Measurement])
 
-    if whichstim == "2Hz"
-        labels = ["Peak 1" "Peak 2"]
-    elseif whichstim == "5Hz"
-        labels = ["Peak 1" "Peak 2" "Peak 3" "Peak 4" "Peak 5"]
-    elseif whichstim == "10Hz"
-        labels = ["Peak 1" "Peak 2" "Peak 3" "Peak 4" "Peak 5" "Peak 6" "Peak 7" "Peak 8" "Peak 9" "Peak 10"]
-    end
-
     for iMeas = 1:length(MeasList)
         ### peak amp by layer per measurement ###
         Tab_Sort = Tab[Tab[!,:Measurement] .== MeasList[iMeas],:]
@@ -24,7 +16,7 @@ function AvrecPeakvsLay(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf")
         Tab_Sort = filter(row -> ! isnan(row.PeakAmp), Tab_Sort)
 
         Title = GroupName * " PeakAmp of " * MeasList[iMeas] * " at " * whichstim
-        avrecplot = @df Tab_Sort groupedboxplot(:Layer, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= labels, title=Title, xlab = "Layer", ylab = "Peak Amplitude [mV/mm²]");
+        avrecplot = @df Tab_Sort groupedboxplot(:Layer, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= [1:parse(Int,whichstim[begin:end-2])...], title=Title, xlab = "Layer", ylab = "Peak Amplitude [mV/mm²]");
 
         name = joinpath(figs,foldername,Title) * savetype
         savefig(avrecplot, name);
@@ -43,14 +35,6 @@ function AvrecPeakvsMeas(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf",stim
 
     LayList = unique(Tab[!,:Layer])
 
-    if whichstim == "2Hz"
-        labels = ["Peak 1" "Peak 2"]
-    elseif whichstim == "5Hz"
-        labels = ["Peak 1" "Peak 2" "Peak 3" "Peak 4" "Peak 5"]
-    elseif whichstim == "10Hz"
-        labels = ["Peak 1" "Peak 2" "Peak 3" "Peak 4" "Peak 5" "Peak 6" "Peak 7" "Peak 8" "Peak 9" "Peak 10"]
-    end
-
     for iLay = 1:length(LayList)
         ### peak amp by measurement per Layer ###
         Tab_Sort    = Tab[Tab[!,:Layer] .== LayList[iLay],:]
@@ -58,7 +42,7 @@ function AvrecPeakvsMeas(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf",stim
         Tab_Sortrms = filter(row -> ! isnan(row.RMS), Tab_Sort)
 
         Title = GroupName * " PeakAmp of " * LayList[iLay] * " at " * whichstim * " " * stimtype
-        avrecplot = @df Tab_Sortamp groupedboxplot(:Measurement, :PeakAmp, group = :OrderofClick, bar_position = :dodge, legend=false, title=Title, xlab = "Measurement", ylab = "Peak Amplitude [mV/mm²]"); # lab = labels for legend 
+        avrecplot = @df Tab_Sortamp groupedboxplot(:Measurement, :PeakAmp, group = :OrderofClick, bar_position = :dodge, legend=false, title=Title, xlab = "Measurement", ylab = "Peak Amplitude [mV/mm²]"); # lab = [1:parse(Int,whichstim[begin:end-2])...] for legend 
 
         name = joinpath(figs,foldername,Title) * savetype
         savefig(avrecplot, name);
@@ -171,25 +155,12 @@ function AvrecScatter(figs,Scat,whichstim="2Hz",savetype=".pdf",stimtype="CL",tr
         for iLay = 1:length(LayList)
             Scat_Lay = Scat_Meas[Scat_Meas[!,:Layer] .== LayList[iLay],:]
             Scat_Lay = filter(row -> ! isnan(row.PeakAmp), Scat_Lay)
-            # edit peak latency time to be after each stim time 
-            if whichstim == "2Hz"
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==2,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 2,:PeakLat] .+ 500
-            elseif whichstim == "5Hz"
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==2,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 2,:PeakLat] .+ 200
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==3,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 3,:PeakLat] .+ 400
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==4,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 4,:PeakLat] .+ 600
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==5,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 5,:PeakLat] .+ 800
-            elseif whichstim == "10Hz"
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==2,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 2,:PeakLat] .+ 200
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==3,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 3,:PeakLat] .+ 300
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==4,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 4,:PeakLat] .+ 400
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==5,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 5,:PeakLat] .+ 500
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==3,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 3,:PeakLat] .+ 600
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==4,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 4,:PeakLat] .+ 700
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==5,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 5,:PeakLat] .+ 800
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==3,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 3,:PeakLat] .+ 900
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==4,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 4,:PeakLat] .+ 1000
-                Scat_Lay[Scat_Lay[!,:OrderofClick].==5,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== 5,:PeakLat] .+ 1100
+            
+            # correct peak latency time to be after each stim start time 
+            startwin = Int.([0:1000/parse(Int,whichstim[begin:end-2]):1000...])
+
+            for iWin = 1:length(startwin) - 1
+                Scat_Lay[Scat_Lay[!,:OrderofClick].== iWin,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== iWin,:PeakLat] .+ startwin[iWin]
             end
 
             Title = "PeakAmp against Latency " * LayList[iLay] * " " * MeasList[iMeas] * " at " * whichstim * " " * stimtype * " " * trialtype
