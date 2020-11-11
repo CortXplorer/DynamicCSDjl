@@ -71,7 +71,7 @@ function PeakRatio_Within(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype="
 
     # Setup for simple 2 sample t test from HypothesisTests ->
     # 4 within group comparisons per group across 5 measurement types and 5 layers:
-    GroupList    = ["KIC" "KIT" "KIV"]
+    GroupList    = ["KIC" "KIT"] #  "KIV"
     LayList     = unique(StatTab[!,:Layer])
     MeasList    = unique(StatTab[!,:Measurement])
     # containers for the table columns: 
@@ -100,10 +100,15 @@ function PeakRatio_Within(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype="
 
             # further pull out each measurement all together
             Gr_Pre = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[1],:]
+            Gr_Pre = filter(row -> ! isnan(row.RatioAMP), Gr_Pre)
             Gr_1   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[2],:]
+            Gr_1 = filter(row -> ! isnan(row.RatioAMP), Gr_1)
             Gr_2   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[3],:]
+            Gr_2 = filter(row -> ! isnan(row.RatioAMP), Gr_2)
             Gr_3   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[4],:]
+            Gr_3 = filter(row -> ! isnan(row.RatioAMP), Gr_3)
             Gr_4   = Gr_lay[Gr_lay[!,:Measurement] .== MeasList[5],:]
+            Gr_4 = filter(row -> ! isnan(row.RatioAMP), Gr_4)
 
             # find the p value outcome for group between measurements
             Prev1_AMP[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[!,:RatioAMP], Gr_1[!,:RatioAMP]))
@@ -213,7 +218,7 @@ function Peak1_Within(data,StatTab,whichpeak="First",whichstim="2Hz",stimtype="C
 
     # Setup for simple 2 sample t test from HypothesisTests ->
     # 4 within group comparisons per group across 5 measurement types and 5 layers:
-    GroupList    = ["KIC" "KIT" "KIV"]
+    GroupList    = ["KIC" "KIT"] #"KIV"
     LayList     = unique(StatTab[!,:Layer])
     MeasList    = unique(StatTab[!,:Measurement])
     # containers for the table columns: 
