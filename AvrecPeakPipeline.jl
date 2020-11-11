@@ -87,8 +87,8 @@ for iTyp = 1:length(stimtype)
             Last  = StimHz[Stim2Hz[!,:OrderofClick] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
 
             # divide the last by first
-            RatioAMP  = Last[!,:PeakAmp] ./ Stat[!,:PeakAmp] 
-            RatioRMS  = Last[!,:RMS] ./ Stat[!,:RMS] 
+            RatioAMP  = Last[!,:PeakAmp] ./ Stat[!,:PeakAmp] .* 100
+            RatioRMS  = Last[!,:RMS] ./ Stat[!,:RMS] .* 100
             # add this column to the table to keep tags
             Stat.RatioAMP, Stat.RatioRMS = RatioAMP, RatioRMS
 

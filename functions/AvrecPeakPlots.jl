@@ -98,11 +98,19 @@ function AvrecPeakRatio(figs,Tab,whichstim="2Hz",savetype=".pdf",stimtype="CL",t
         Title = "Synaptic dep ratio of " * LayList[iLay] * " at " * whichstim * " Peak Amplitude " * stimtype
         ratioplot = @df Tab_Sortamp groupedboxplot(:Measurement, :RatioAMP, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak Amplitude [%]")
 
+        if maximum(Tab_Sortamp.RatioAMP) > 500
+            plot!(ylims=(0,500))
+        end
+
         name = joinpath(figs,foldername,Title) * " " * trialtype * savetype
         savefig(ratioplot, name);
 
         Title = "Synaptic dep ratio of " * LayList[iLay] * " at " * whichstim * " RMS " * stimtype
         ratioplot = @df Tab_Sortrms groupedboxplot(:Measurement, :RatioRMS, group = :Group, bar_position = :dodge, lab= ["Control" "Treated" "Virus Control"], title=Title, xlab = "Measurement", ylab = "Ratio of last to first Peak RMS [%]")
+
+        if maximum(Tab_Sortrms.RatioRMS) > 500
+            plot!(ylims=(0,500))
+        end
 
         name = joinpath(figs,foldername,Title) * " " * trialtype * savetype
         savefig(ratioplot, name);
