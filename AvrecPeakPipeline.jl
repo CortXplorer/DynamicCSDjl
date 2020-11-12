@@ -53,13 +53,13 @@ for iTyp = 1:length(stimtype)
 
         ### Now Stats ###
         #-----------------------------------------------------------------------
-        TAorAT,StatsTitle = ["TA" "ST"], ["Average Trial Stats" "Single Trial Stats"]
+        TAorST,StatsTitle = ["TA" "ST"], ["Average Trial Stats" "Single Trial Stats"]
         for iStat = 1:length(TAorST)
             println(StatsTitle[iStat])
             # seperate just stimulus presentation from full table
-            if TAorAT[iStat] == "TA"
+            if TAorST[iStat] == "TA"
                 StimHz = PeakDatTA[PeakDatTA[!,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
-            elseif TAorAT[iStat] == "ST"
+            elseif TAorST[iStat] == "ST"
                 StimHz = PeakDatST[PeakDatST[!,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
             end
 
@@ -72,9 +72,9 @@ for iTyp = 1:length(stimtype)
 
                 if ipeak <= StimHz.ClickFreq[1] # cut this to amount of detection windows
                     Stat = StimHz[StimHz[!,:OrderofClick] .== ipeak,:]
-                    Avrec1Peak(figs,Stat,peaks[ipeak],freqtype[iFrq],savetype,stimtype[iTyp],TAorAT[iStat])
-                    Peak1_Between(data,Stat,peaks[ipeak],freqtype[iFrq],stimtype[iTyp],TAorAT[iStat])
-                    Peak1_Within(data,Stat,peaks[ipeak],freqtype[iFrq],stimtype[iTyp],TAorAT[iStat])
+                    Avrec1Peak(figs,Stat,peaks[ipeak],freqtype[iFrq],savetype,stimtype[iTyp],TAorST[iStat])
+                    Peak1_Between(data,Stat,peaks[ipeak],freqtype[iFrq],stimtype[iTyp],TAorST[iStat])
+                    Peak1_Within(data,Stat,peaks[ipeak],freqtype[iFrq],stimtype[iTyp],TAorST[iStat])
                 end
 
             end
@@ -93,14 +93,14 @@ for iTyp = 1:length(stimtype)
             Stat.RatioAMP, Stat.RatioRMS = RatioAMP, RatioRMS
 
             # cheeky plots first;
-            AvrecPeakRatio(figs,Stat,freqtype[iFrq],savetype,stimtype[iTyp],TAorAT[iStat])
+            AvrecPeakRatio(figs,Stat,freqtype[iFrq],savetype,stimtype[iTyp],TAorST[iStat])
 
             # And stats for overlay
-            PeakRatio_Between(data,Stat,freqtype[iFrq],stimtype[iTyp],TAorAT[iStat])
-            PeakRatio_Within(data,Stat,freqtype[iFrq],stimtype[iTyp],TAorAT[iStat])
+            PeakRatio_Between(data,Stat,freqtype[iFrq],stimtype[iTyp],TAorST[iStat])
+            PeakRatio_Within(data,Stat,freqtype[iFrq],stimtype[iTyp],TAorST[iStat])
 
             # Scatter Plots for visualization and possibly use for Brown Forsythe stats overlay
-            AvrecScatter(figs,StimHz,freqtype[iFrq],savetype,stimtype[iTyp],TAorAT[iStat])
+            AvrecScatter(figs,StimHz,freqtype[iFrq],savetype,stimtype[iTyp],TAorST[iStat])
 
         end
     end
