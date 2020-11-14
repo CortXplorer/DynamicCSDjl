@@ -3,5 +3,6 @@
 /groups
 /Data
 .vscode
+.Rhistory
 
 *.csv
