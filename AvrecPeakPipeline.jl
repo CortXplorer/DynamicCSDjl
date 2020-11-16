@@ -1,6 +1,6 @@
 using CSV, DataFrames
 using StatsPlots
-using HypothesisTests
+using HypothesisTests, EffectSizes
 using Infiltrator
 
 home    = @__DIR__
@@ -18,42 +18,42 @@ freqtype = ["2Hz" "5Hz" "10Hz" "20Hz" "40Hz"]
 for iTyp = 1:length(stimtype)
     # Load in data from matlab table csv file which contains 2 and 5 hz peak amp and latency. 
     if stimtype[iTyp] == "CL"
-        PeakDatTA = CSV.File("AVRECPeakCL.csv") |> DataFrame # trial average
-        PeakDatST = CSV.File("AVRECPeakCLST.csv") |> DataFrame # single trial
+        PeakDatTA = CSV.File(joinpath(data,"AVRECPeakCL.csv")) |> DataFrame # trial average
+        PeakDatST = CSV.File(joinpath(data,"AVRECPeakCLST.csv")) |> DataFrame # single trial
         println("Click Trains")
     elseif stimtype[iTyp] == "AM"
-        PeakDatTA = CSV.File("AVRECPeakAM.csv") |> DataFrame # trial average
-        PeakDatST = CSV.File("AVRECPeakAMST.csv") |> DataFrame # single trial
+        PeakDatTA = CSV.File(joinpath(data,"AVRECPeakAM.csv")) |> DataFrame # trial average
+        PeakDatST = CSV.File(joinpath(data,"AVRECPeakAMST.csv")) |> DataFrame # single trial
         println("Amplitude Modulation")
     end
 
     # seperate by group
-    KIC = PeakDatTA[PeakDatTA[!,:Group] .== "KIC",:]
-    KIT = PeakDatTA[PeakDatTA[!,:Group] .== "KIT",:]
-    KIV = PeakDatTA[PeakDatTA[!,:Group] .== "KIV",:]
+    KIC = PeakDatTA[PeakDatTA[:,:Group] .== "KIC",:]
+    KIT = PeakDatTA[PeakDatTA[:,:Group] .== "KIT",:]
+    KIV = PeakDatTA[PeakDatTA[:,:Group] .== "KIV",:]
 
     for iFrq = 1:length(freqtype)
         println("At frequency: " * freqtype[iFrq])
         # further seperate by stimulus
-        KIC = KIC[KIC[!,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
-        KIT = KIT[KIT[!,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
-        KIV = KIV[KIV[!,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
+        KICfreq = KIC[KIC[:,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
+        KITfreq = KIT[KIT[:,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
+        KIVfreq = KIV[KIV[:,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
 
         ## Box Plots First ### 
         # Output: figures in folder AvrecPeakPlots_againstMeasurement/_againstLayer of Peak Amplitude over measurement/layer per layer/measurement
         println("Peak vs Measurement")
-        AvrecPeakvsMeas(figs,KIC,"KIC",freqtype[iFrq],savetype,stimtype[iTyp])
-        AvrecPeakvsMeas(figs,KIT,"KIT",freqtype[iFrq],savetype,stimtype[iTyp])
-        AvrecPeakvsMeas(figs,KIV,"KIV",freqtype[iFrq],savetype,stimtype[iTyp])
+        AvrecPeakvsMeas(figs,KICfreq,"KIC",freqtype[iFrq],savetype,stimtype[iTyp])
+        AvrecPeakvsMeas(figs,KITfreq,"KIT",freqtype[iFrq],savetype,stimtype[iTyp])
+        AvrecPeakvsMeas(figs,KIVfreq,"KIV",freqtype[iFrq],savetype,stimtype[iTyp])
 
         println("Peak vs Layer")
-        AvrecPeakvsLay(figs,KIC,"KIC",freqtype[iFrq],savetype)
-        AvrecPeakvsLay(figs,KIT,"KIT",freqtype[iFrq],savetype)
-        AvrecPeakvsLay(figs,KIV,"KIV",freqtype[iFrq],savetype)
+        AvrecPeakvsLay(figs,KICfreq,"KIC",freqtype[iFrq],savetype)
+        AvrecPeakvsLay(figs,KITfreq,"KIT",freqtype[iFrq],savetype)
+        AvrecPeakvsLay(figs,KIVfreq,"KIV",freqtype[iFrq],savetype)
 
         ### Now Stats ###
         #-----------------------------------------------------------------------
-        TAorST,StatsTitle = ["TA" "ST"], ["Average Trial Stats" "Single Trial Stats"]
+        TAorST, StatsTitle = ["TA" "ST"], ["Average Trial Stats" "Single Trial Stats"]
         for iStat = 1:length(TAorST)
             println(StatsTitle[iStat])
             # seperate just stimulus presentation from full table

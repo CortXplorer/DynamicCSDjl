@@ -7,11 +7,11 @@ function AvrecPeakvsLay(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf")
         mkdir(joinpath(figs,foldername))
     end
 
-    MeasList = unique(Tab[!,:Measurement])
+    MeasList = unique(Tab[:,:Measurement])
 
     for iMeas = 1:length(MeasList)
         ### peak amp by layer per measurement ###
-        Tab_Sort = Tab[Tab[!,:Measurement] .== MeasList[iMeas],:]
+        Tab_Sort = Tab[Tab[:,:Measurement] .== MeasList[iMeas],:]
         # take out nan peak amp rows
         Tab_Sort = filter(row -> ! isnan(row.PeakAmp), Tab_Sort)
 
@@ -33,11 +33,11 @@ function AvrecPeakvsMeas(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf",stim
         mkdir(joinpath(figs,foldername))
     end
 
-    LayList = unique(Tab[!,:Layer])
+    LayList = unique(Tab[:,:Layer])
 
     for iLay = 1:length(LayList)
         ### peak amp by measurement per Layer ###
-        Tab_Sort    = Tab[Tab[!,:Layer] .== LayList[iLay],:]
+        Tab_Sort    = Tab[Tab[:,:Layer] .== LayList[iLay],:]
         Tab_Sortamp = filter(row -> ! isnan(row.PeakAmp), Tab_Sort)
         Tab_Sortrms = filter(row -> ! isnan(row.RMS), Tab_Sort)
 
@@ -71,11 +71,11 @@ function AvrecPeakRatio(figs,Tab,whichstim="2Hz",savetype=".pdf",stimtype="CL",t
         mkdir(joinpath(figs,foldername))
     end
 
-    LayList = unique(Tab[!,:Layer])
+    LayList = unique(Tab[:,:Layer])
 
     for iLay = 1:length(LayList)
         ### peak amp by measurement per Layer ###
-        Tab_Sort = Tab[Tab[!,:Layer] .== LayList[iLay],:]
+        Tab_Sort = Tab[Tab[:,:Layer] .== LayList[iLay],:]
         Tab_Sortamp = filter(row -> ! isnan(row.RatioAMP), Tab_Sort)
         Tab_Sortrms = filter(row -> ! isnan(row.RatioRMS), Tab_Sort)
 
@@ -110,11 +110,11 @@ function Avrec1Peak(figs,Tab,whichpeak="1st",whichstim="2Hz",savetype=".pdf",sti
         mkdir(joinpath(figs,foldername))
     end
 
-    LayList = unique(Tab[!,:Layer])
+    LayList = unique(Tab[:,:Layer])
 
     for iLay = 1:length(LayList)
         ### peak amp by measurement per Layer ###
-        Tab_Sort = Tab[Tab[!,:Layer] .== LayList[iLay],:]
+        Tab_Sort = Tab[Tab[:,:Layer] .== LayList[iLay],:]
         Tab_Sortamp = filter(row -> ! isnan(row.PeakAmp), Tab_Sort)
         Tab_Sortrms = filter(row -> ! isnan(row.RMS), Tab_Sort)
 
@@ -146,21 +146,21 @@ function AvrecScatter(figs,Scat,whichstim="2Hz",savetype=".pdf",stimtype="CL",tr
         mkdir(joinpath(figs,foldername))
     end
 
-    MeasList = unique(Scat[!,:Measurement])
-    LayList  = unique(Scat[!,:Layer])
+    MeasList = unique(Scat[:,:Measurement])
+    LayList  = unique(Scat[:,:Layer])
     for iMeas = 1:length(MeasList)
         ### per measurement ###
-        Scat_Meas = Scat[Scat[!,:Measurement] .== MeasList[iMeas],:]
+        Scat_Meas = Scat[Scat[:,:Measurement] .== MeasList[iMeas],:]
         
         for iLay = 1:length(LayList)
-            Scat_Lay = Scat_Meas[Scat_Meas[!,:Layer] .== LayList[iLay],:]
+            Scat_Lay = Scat_Meas[Scat_Meas[:,:Layer] .== LayList[iLay],:]
             Scat_Lay = filter(row -> ! isnan(row.PeakAmp), Scat_Lay)
             
             # correct peak latency time to be after each stim start time 
             startwin = Int.([0:1000/parse(Int,whichstim[begin:end-2]):1000...])
 
             for iWin = 1:length(startwin) - 1
-                Scat_Lay[Scat_Lay[!,:OrderofClick].== iWin,:PeakLat] = Scat_Lay[Scat_Lay[!,:OrderofClick] .== iWin,:PeakLat] .+ startwin[iWin]
+                Scat_Lay[Scat_Lay[:,:OrderofClick].== iWin,:PeakLat] = Scat_Lay[Scat_Lay[:,:OrderofClick] .== iWin,:PeakLat] .+ startwin[iWin]
             end
 
             Title = "PeakAmp against Latency " * LayList[iLay] * " " * MeasList[iMeas] * " at " * whichstim * " " * stimtype * " " * trialtype
