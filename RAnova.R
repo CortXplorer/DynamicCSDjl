@@ -7,7 +7,7 @@ sink(file=file.path(datapath,"AvrecPeakStats","ANOVASummary.txt"), type=c("outpu
 stimtype = list("CL","AM")
 
 for (iStim in 1:length(stimtype)) {
-  print(paste0("=========================== ANOVAs FOR STIME TYPE ", stimtype[iStim], " ==========================="))
+  print(paste0("=========================== ANOVAs FOR STIM TYPE ", stimtype[iStim], " ==========================="))
   # load full dataset in of appropriate stim type
   peakdata = read.csv(file = file.path(datapath,paste0("AVRECPeak",stimtype[1],".csv")))
   # pull out stim frequencies present to loop through
@@ -15,7 +15,7 @@ for (iStim in 1:length(stimtype)) {
   
   for (iFreq in 1:nrow(stimfreq)) {
     
-    print(paste0("===================== STIMULUS FREQUENCY ", stimfreq[1,iFreq], " ====================="))
+    print(paste0("===================== STIMULUS FREQUENCY ", stimfreq[1,iFreq], " Hz ====================="))
     
     # cut down to one stim frequency 
     Dat = subset(peakdata, ClickFreq == stimfreq[1,iFreq])
@@ -23,7 +23,7 @@ for (iStim in 1:length(stimtype)) {
     # loop through each response per stimuli 
     for (iOrd in 1:stimfreq[1,iFreq]) {
       
-      print(paste0("=============== CLICK ", iOrd, " of ", ordernum, " ==============="))
+      print(paste0("=============== RESPONSE ", iOrd, " OF ", ordernum, " ==============="))
       Dat = subset(Dat, OrderofClick == iOrd)
       
       print("=========PEAK AMPLITUDE=========") 
@@ -41,5 +41,5 @@ for (iStim in 1:length(stimtype)) {
     } # order of click
   } # which stim frequency
 } # which stim type, CL or AM
-sink() #restore output to console and finish using txt file
 
+sink() #restore output to console and finish using txt file
