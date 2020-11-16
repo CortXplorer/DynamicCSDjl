@@ -5,6 +5,7 @@ datapath = file.path(home,"Data")
 
 sink(file=file.path(datapath,"AvrecPeakStats","ANOVASummary.txt"), type=c("output")) #save all output to txt file!
 stimtype = list("CL","AM")
+comptype = list("KIT vs KIC","KIT vs KIV","KIC vs KIV")
 
 for (iStim in 1:length(stimtype)) {
   print(paste0("=========================== ANOVAs FOR STIM TYPE ", stimtype[iStim], " ==========================="))
@@ -26,18 +27,29 @@ for (iStim in 1:length(stimtype)) {
       print(paste0("=============== RESPONSE ", iOrd, " OF ", ordernum, " ==============="))
       Dat = subset(Dat, OrderofClick == iOrd)
       
-      print("=========PEAK AMPLITUDE=========") 
-      res.aov3 = aov(PeakAmp ~ Group * Measurement, data = Dat)
-      summary(res.aov3)
+      for (iCmp in 1:length(comptype)) {
+        
+        if (comptype[comptype[iCmp]] == "KIT vs KIC") {
+          subDat = subset(Dat, !(Group == "KIV"))
+        } else if (comptype[comptype[iCmp]] == "KIT vs KIV") {
+          subDat = subset(Dat, !(Group == "KIC"))
+        } else if (comptype[comptype[iCmp]] == "KIC vs KIV") {
+          subDat = subset(Dat, !(Group == "KIT"))
+        }
+        
+        print(paste0("========= PEAK AMPLITUDE ", comptype[iCmp], " =========")) 
+        res.aov3 = aov(PeakAmp ~ Group * Measurement, data = subDat)
+        summary(res.aov3)
+        
+        print(paste0("========= PEAK LATITUDE ", comptype[iCmp], " =========")) 
+        res.aov3 = aov(PeakLat ~ Group * Measurement, data = subDat)
+        summary(res.aov3)
+        
+        print(paste0("========= ROOT MEAN SQUARE ", comptype[iCmp], " =========")) 
+        res.aov3 = aov(RMS ~ Group * Measurement, data = subDat)
+        summary(res.aov3)
       
-      print("=========PEAK LATITUDE=========") 
-      res.aov3 = aov(PeakLat ~ Group * Measurement, data = Dat)
-      summary(res.aov3)
-      
-      print("=========ROOT MEAN SQUARE=========") 
-      res.aov3 = aov(RMS ~ Group * Measurement, data = Dat)
-      summary(res.aov3)
-      
+      }
     } # order of click
   } # which stim frequency
 } # which stim type, CL or AM
