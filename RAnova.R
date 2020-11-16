@@ -15,6 +15,8 @@ DatSum = summary(res.aov3)
 #method one to save out one at a time
 capture.output(DatSum,file="Datsum.txt",append = FALSE,type = c("output","message"),split=FALSE)
 
+# method 2 of creating print lines as titles and data output for all dat to one file
+sink("DataSummary.txt", type=c("output"))
 print("Hello there boss")
-
-
+DatSum
+sink()
