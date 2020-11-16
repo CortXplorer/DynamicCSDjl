@@ -3,20 +3,43 @@ setwd("D:/DynamicCSDjl")
 home = getwd()
 datapath = file.path(home,"Data")
 
-# load full dataset in
-peakdata = read.csv(file = file.path(datapath,"AVRECPeakAM.csv"))
+sink(file=file.path(datapath,"AvrecPeakStats","ANOVASummary.txt"), type=c("output")) #save all output to txt file!
+stimtype = list("CL","AM")
 
-# cut down to one stim freq on the first stim response
-Dat = subset(peakdata, ClickFreq == 2 & OrderofClick ==1)
+for (iStim in 1:length(stimtype)) {
+  print(paste0("=========================== ANOVAs FOR STIME TYPE ", stimtype[iStim], " ==========================="))
+  # load full dataset in of appropriate stim type
+  peakdata = read.csv(file = file.path(datapath,paste0("AVRECPeak",stimtype[1],".csv")))
+  # pull out stim frequencies present to loop through
+  stimfreq = unique(peakdata[c("ClickFreq")])
+  
+  for (iFreq in 1:nrow(stimfreq)) {
+    
+    print(paste0("===================== STIMULUS FREQUENCY ", stimfreq[1,iFreq], " ====================="))
+    
+    # cut down to one stim frequency 
+    Dat = subset(peakdata, ClickFreq == stimfreq[1,iFreq])
+    
+    # loop through each response per stimuli 
+    for (iOrd in 1:stimfreq[1,iFreq]) {
+      
+      print(paste0("=============== CLICK ", iOrd, " of ", ordernum, " ==============="))
+      Dat = subset(Dat, OrderofClick == iOrd)
+      
+      print("=========PEAK AMPLITUDE=========") 
+      res.aov3 = aov(PeakAmp ~ Group * Measurement, data = Dat)
+      summary(res.aov3)
+      
+      print("=========PEAK LATITUDE=========") 
+      res.aov3 = aov(PeakLat ~ Group * Measurement, data = Dat)
+      summary(res.aov3)
+      
+      print("=========ROOT MEAN SQUARE=========") 
+      res.aov3 = aov(RMS ~ Group * Measurement, data = Dat)
+      summary(res.aov3)
+      
+    } # order of click
+  } # which stim frequency
+} # which stim type, CL or AM
+sink() #restore output to console and finish using txt file
 
-res.aov3 <- aov(PeakAmp ~ Group * Measurement, data = Dat)
-DatSum = summary(res.aov3)
-
-#method one to save out one at a time
-capture.output(DatSum,file="Datsum.txt",append = FALSE,type = c("output","message"),split=FALSE)
-
-# method 2 of creating print lines as titles and data output for all dat to one file
-sink("DataSummary.txt", type=c("output"))
-print("Hello there boss")
-DatSum
-sink()
