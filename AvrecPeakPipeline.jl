@@ -83,12 +83,12 @@ for iTyp = 1:length(stimtype)
             # -> J. Heck, in her paper, used EPSP5/EPSP1 to show the difference between groups of the ratio from the last to first stimulus response
 
             # seperate the 1st and last click
-            Stat  = StimHz[Stim2Hz[:,:OrderofClick] .== 1,:]
-            Last  = StimHz[Stim2Hz[:,:OrderofClick] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
+            Stat  = StimHz[StimHz[:,:OrderofClick] .== 1,:]
+            Last  = StimHz[StimHz[:,:OrderofClick] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
 
             # divide the last by first
-            RatioAMP  = Last[:,:PeakAmp] ./ Stat[!,:PeakAmp] .* 100
-            RatioRMS  = Last[:,:RMS] ./ Stat[!,:RMS] .* 100
+            RatioAMP  = Last[:,:PeakAmp] ./ Stat[:,:PeakAmp] .* 100
+            RatioRMS  = Last[:,:RMS] ./ Stat[:,:RMS] .* 100
             # add this column to the table to keep tags
             Stat.RatioAMP, Stat.RatioRMS = RatioAMP, RatioRMS
 
