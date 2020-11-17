@@ -58,20 +58,20 @@ for iTyp = 1:length(stimtype)
             println(StatsTitle[iStat])
             # seperate just stimulus presentation from full table
             if TAorST[iStat] == "TA"
-                StimHz = PeakDatTA[PeakDatTA[!,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
+                StimHz = PeakDatTA[PeakDatTA[:,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
             elseif TAorST[iStat] == "ST"
-                StimHz = PeakDatST[PeakDatST[!,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
+                StimHz = PeakDatST[PeakDatST[:,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
             end
 
             # remove group KIV for now until it is a proper size
-            StimHz = StimHz[StimHz[!,:Group] .!= "KIV",:]
+            StimHz = StimHz[StimHz[:,:Group] .!= "KIV",:]
 
             ## Peak Amp/Lat/RMS response difference
             peaks = ["1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" "10th"]
             for ipeak = 1:length(peaks)
 
                 if ipeak <= StimHz.ClickFreq[1] # cut this to amount of detection windows
-                    Stat = StimHz[StimHz[!,:OrderofClick] .== ipeak,:]
+                    Stat = StimHz[StimHz[:,:OrderofClick] .== ipeak,:]
                     Avrec1Peak(figs,Stat,peaks[ipeak],freqtype[iFrq],savetype,stimtype[iTyp],TAorST[iStat])
                     Peak1_Between(data,Stat,peaks[ipeak],freqtype[iFrq],stimtype[iTyp],TAorST[iStat])
                     Peak1_Within(data,Stat,peaks[ipeak],freqtype[iFrq],stimtype[iTyp],TAorST[iStat])
@@ -83,12 +83,12 @@ for iTyp = 1:length(stimtype)
             # -> J. Heck, in her paper, used EPSP5/EPSP1 to show the difference between groups of the ratio from the last to first stimulus response
 
             # seperate the 1st and last click
-            Stat  = StimHz[Stim2Hz[!,:OrderofClick] .== 1,:]
-            Last  = StimHz[Stim2Hz[!,:OrderofClick] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
+            Stat  = StimHz[Stim2Hz[:,:OrderofClick] .== 1,:]
+            Last  = StimHz[Stim2Hz[:,:OrderofClick] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
 
             # divide the last by first
-            RatioAMP  = Last[!,:PeakAmp] ./ Stat[!,:PeakAmp] .* 100
-            RatioRMS  = Last[!,:RMS] ./ Stat[!,:RMS] .* 100
+            RatioAMP  = Last[:,:PeakAmp] ./ Stat[!,:PeakAmp] .* 100
+            RatioRMS  = Last[:,:RMS] ./ Stat[!,:RMS] .* 100
             # add this column to the table to keep tags
             Stat.RatioAMP, Stat.RatioRMS = RatioAMP, RatioRMS
 
