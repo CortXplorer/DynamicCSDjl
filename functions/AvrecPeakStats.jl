@@ -12,7 +12,7 @@ function PeakRatio_Between(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype=
     Layer       = String[]
     Measurement = String[]   
     PAMP        = ones(length(CompList) * length(LayList) * length(MeasList)) * -1 # number of rows
-    PRMS        = ones(length(PAMP)) * -1
+    PRMS,CDAMP,CDRMS = ones(length(PAMP))*-1,ones(length(PAMP))*-1,ones(length(PAMP))*-1
     
     count       = [1]
     # loop through the above - create a table output! :) 
@@ -41,6 +41,8 @@ function PeakRatio_Between(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype=
                 # find the p value outcome for this comparison at both stimuli conditions
                 PAMP[count[1]] = pvalue(UnequalVarianceTTest(G1_layamp[:,:RatioAMP],G2_layamp[:,:RatioAMP]))
                 PRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_layrms[:,:RatioRMS],G2_layrms[:,:RatioRMS]))
+                CDAMP[count[1]] = effectsize(CohenD(G1_layamp[:,:RatioAMP],G2_layamp[:,:RatioAMP]))
+                CDRMS[count[1]] = effectsize(CohenD(G1_layrms[:,:RatioRMS],G2_layrms[:,:RatioRMS]))
 
                 count[1] = count[1] + 1
                 # store the appropriate tags at the same positions in their respective lists
@@ -53,8 +55,9 @@ function PeakRatio_Between(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype=
 
     PAMP = PAMP[PAMP .!= -1] # need to remove unused rows that still equal 1
     PRMS = PRMS[PRMS .!= -1]
+    CDAMP,CDRMS = CDAMP[CDAMP .!= -1], CDRMS[CDRMS .!= -1]
 
-    BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, PAMP=PAMP, PRMS=PRMS)
+    BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, PAMP=PAMP, PRMS=PRMS, CDAMP=CDAMP, CDRMS=CDRMS)
 
     foldername = "AvrecPeakStats"
     if !isdir(joinpath(data,foldername))
@@ -79,14 +82,11 @@ function PeakRatio_Within(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype="
     Layer       = String[]
     # Measurement = String[]   
     Prev1_AMP  = ones(length(GroupList) * length(LayList)) # number of rows (more columns this time)
-    Prev2_AMP  = ones(length(Prev1_AMP))
-    Prev3_AMP  = ones(length(Prev1_AMP))
-    Prev4_AMP  = ones(length(Prev1_AMP))
+    Prev2_AMP,Prev3_AMP,Prev4_AMP = ones(length(Prev1_AMP)),ones(length(Prev1_AMP)),ones(length(Prev1_AMP))
+    Prev1_RMS,Prev2_RMS,Prev3_RMS,Prev4_RMS = ones(length(Prev1_AMP)),ones(length(Prev1_AMP)),ones(length(Prev1_AMP)),ones(length(Prev1_AMP))
 
-    Prev1_RMS  = ones(length(Prev1_AMP))
-    Prev2_RMS  = ones(length(Prev1_AMP))
-    Prev3_RMS  = ones(length(Prev1_AMP))
-    Prev4_RMS  = ones(length(Prev1_AMP))
+    Prev1_CDAMP,Prev2_CDAMP,Prev3_CDAMP,Prev4_CDAMP = ones(length(Prev1_AMP)),ones(length(Prev1_AMP)),ones(length(Prev1_AMP)),ones(length(Prev1_AMP))
+    Prev1_CDRMS,Prev2_CDRMS,Prev3_CDRMS,Prev4_CDRMS = ones(length(Prev1_AMP)),ones(length(Prev1_AMP)),ones(length(Prev1_AMP)),ones(length(Prev1_AMP))
 
     count       = [1]
     # loop through the above - create a table output! :) 
@@ -120,7 +120,16 @@ function PeakRatio_Within(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype="
             Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_2[:,:RatioRMS]))
             Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_3[:,:RatioRMS]))
             Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_4[:,:RatioRMS]))
+            # Cohen's D
+            Prev1_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_1[:,:RatioAMP]))
+            Prev2_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_2[:,:RatioAMP]))
+            Prev3_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_3[:,:RatioAMP]))
+            Prev4_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_4[:,:RatioAMP]))
 
+            Prev1_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_1[:,:RatioRMS]))
+            Prev2_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_2[:,:RatioRMS]))
+            Prev3_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_3[:,:RatioRMS]))
+            Prev4_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_4[:,:RatioRMS]))
             
             count[1] = count[1] + 1
             # store the appropriate tags at the same positions in their respective lists
@@ -130,7 +139,7 @@ function PeakRatio_Within(data,StatTab,whichstim="2Hz",stimtype="CL",trialtype="
         end # layer
     end # comparison of which groups
 
-    BetweenGroup = DataFrame(Group=Group, Layer=Layer, Prev1_AMP=Prev1_AMP, Prev2_AMP=Prev2_AMP, Prev3_AMP=Prev3_AMP, Prev4_AMP=Prev4_AMP, Prev1_RMS=Prev1_RMS, Prev2_RMS=Prev2_RMS, Prev3_RMS=Prev3_RMS, Prev4_RMS=Prev4_RMS)
+    BetweenGroup = DataFrame(Group=Group, Layer=Layer, Prev1_AMP=Prev1_AMP, Prev2_AMP=Prev2_AMP, Prev3_AMP=Prev3_AMP, Prev4_AMP=Prev4_AMP, Prev1_RMS=Prev1_RMS, Prev2_RMS=Prev2_RMS, Prev3_RMS=Prev3_RMS, Prev4_RMS=Prev4_RMS, Prev1_CDAMP=Prev1_CDAMP, Prev2_CDAMP=Prev2_CDAMP, Prev3_CDAMP=Prev3_CDAMP, Prev4_CDAMP=Prev4_CDAMP, Prev1_CDRMS=Prev1_CDRMS, Prev2_CDRMS=Prev2_CDRMS, Prev3_CDRMS=Prev3_CDRMS, Prev4_CDRMS=Prev4_CDRMS)
 
     foldername = "AvrecPeakStats"
     if !isdir(joinpath(data,foldername))
@@ -156,8 +165,8 @@ function Peak1_Between(data,StatTab,whichpeak="First",whichstim="2Hz",stimtype="
     Layer       = String[]
     Measurement = String[]   
     PAmp        = ones(length(CompList) * length(LayList) * length(MeasList)) * -1 # number of rows
-    PLat    = ones(length(PAmp)) * -1
-    PRMS    = ones(length(PAmp)) * -1
+    PLat, PRMS  = ones(length(PAmp))*-1 , ones(length(PAmp))*-1
+    CDAmp,CDLat,CDRMS = ones(length(PAmp))*-1 , ones(length(PAmp))*-1, ones(length(PAmp))*-1
 
     count       = [1]
     # loop through the above - create a table output! :) 
@@ -186,9 +195,12 @@ function Peak1_Between(data,StatTab,whichpeak="First",whichstim="2Hz",stimtype="
                 if isempty(G1_lay) || isempty(G2_lay)
                     continue 
                 end
-                PAmp[count[1]] = pvalue(UnequalVarianceTTest(G1_layamp[:,:PeakAmp],G2_layamp[:,:PeakAmp]))
-                PLat[count[1]] = pvalue(UnequalVarianceTTest(G1_laylat[:,:PeakLat],G2_laylat[:,:PeakLat]))
-                PRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_layrms[:,:RMS],G2_layrms[:,:RMS]))
+                PAmp[count[1]]  = pvalue(UnequalVarianceTTest(G1_layamp[:,:PeakAmp],G2_layamp[:,:PeakAmp]))
+                CDAmp[count[1]] = effectsize(CohenD(G1_layamp[:,:PeakAmp],G2_layamp[:,:PeakAmp]))
+                PLat[count[1]]  = pvalue(UnequalVarianceTTest(G1_laylat[:,:PeakLat],G2_laylat[:,:PeakLat]))
+                CDLat[count[1]] = effectsize(CohenD(G1_laylat[:,:PeakLat],G2_laylat[:,:PeakLat]))
+                PRMS[count[1]]  = pvalue(UnequalVarianceTTest(G1_layrms[:,:RMS],G2_layrms[:,:RMS]))
+                CDRMS[count[1]] = effectsize(CohenD(G1_layamp[:,:RMS],G2_layamp[:,:RMS]))
                 count[1] = count[1] + 1
                 # store the appropriate tags at the same positions in their respective lists
                 push!(Comparison,CompList[iComp])
@@ -198,10 +210,10 @@ function Peak1_Between(data,StatTab,whichpeak="First",whichstim="2Hz",stimtype="
         end # measurement type
     end # comparison of which groups
 
-    PAmp = PAmp[PAmp .!= -1] # need to remove unused rows that still equal 1
-    PLat = PLat[PLat .!= -1] # peak lat can actually be 1 so take if peak amp isn't 1
-    PRMS = PRMS[PRMS .!= -1]
-    BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, PAmp=PAmp, PLat=PLat, PRMS=PRMS)
+    # need to remove unused rows that still equal -1
+    PAmp, PLat, PRMS  = PAmp[PAmp .!= -1], PLat[PLat .!= -1], PRMS[PRMS .!= -1]
+    CDAmp,CDLat,CDRMS = CDAmp[CDAmp .!= -1], CDLat[CDLat .!= -1], CDRMS[CDRMS .!= -1] 
+    BetweenGroup = DataFrame(Comparison=Comparison, Measurement=Measurement, Layer=Layer, PAmp=PAmp, PLat=PLat, PRMS=PRMS, CDAmp=CDAmp, CDLat=CDLat, CDRMS=CDRMS)
 
     foldername = "AvrecPeakStats"
     if !isdir(joinpath(data,foldername))
@@ -225,20 +237,14 @@ function Peak1_Within(data,StatTab,whichpeak="First",whichstim="2Hz",stimtype="C
     Group       = String[]
     Layer       = String[]
     # Measurement = String[]   
-    Prev1_Amp  = ones(length(GroupList) * length(LayList)) # number of rows (more columns this time)
-    Prev2_Amp  = ones(length(Prev1_Amp))
-    Prev3_Amp  = ones(length(Prev1_Amp))
-    Prev4_Amp  = ones(length(Prev1_Amp))
-
-    Prev1_Lat  = ones(length(Prev1_Amp))
-    Prev2_Lat  = ones(length(Prev1_Amp))
-    Prev3_Lat  = ones(length(Prev1_Amp))
-    Prev4_Lat  = ones(length(Prev1_Amp))
-
-    Prev1_RMS  = ones(length(Prev1_Amp))
-    Prev2_RMS  = ones(length(Prev1_Amp))
-    Prev3_RMS  = ones(length(Prev1_Amp))
-    Prev4_RMS  = ones(length(Prev1_Amp))
+    Prev1_Amp  = ones(length(GroupList) * length(LayList)) # number of rows 
+    Prev2_Amp,Prev3_Amp,Prev4_Amp  = ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp))
+    Prev1_Lat,Prev2_Lat,Prev3_Lat,Prev4_Lat  = ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp))
+    Prev1_RMS,Prev2_RMS,Prev3_RMS,Prev4_RMS  = ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp))
+    
+    Prev1_CDAmp,Prev2_CDAmp,Prev3_CDAmp,Prev4_CDAmp  = ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp))
+    Prev1_CDLat,Prev2_CDLat,Prev3_CDLat,Prev4_CDLat  = ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp))
+    Prev1_CDRMS,Prev2_CDRMS,Prev3_CDRMS,Prev4_CDRMS  = ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp)),ones(length(Prev1_Amp))
 
     count       = [1]
     # loop through the above - create a table output! :) 
@@ -282,7 +288,22 @@ function Peak1_Within(data,StatTab,whichpeak="First",whichstim="2Hz",stimtype="C
             Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G2_rms[:,:RMS]))
             Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G3_rms[:,:RMS]))
             Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G4_rms[:,:RMS]))
-            
+            #Cohen's D
+            Prev1_CDAmp[count[1]]  = effectsize(CohenD(GP_amp[:,:PeakAmp], G1_amp[:,:PeakAmp]))
+            Prev2_CDAmp[count[1]]  = effectsize(CohenD(GP_amp[:,:PeakAmp], G2_amp[:,:PeakAmp]))
+            Prev3_CDAmp[count[1]]  = effectsize(CohenD(GP_amp[:,:PeakAmp], G3_amp[:,:PeakAmp]))
+            Prev4_CDAmp[count[1]]  = effectsize(CohenD(GP_amp[:,:PeakAmp], G4_amp[:,:PeakAmp]))
+
+            Prev1_CDLat[count[1]]  = effectsize(CohenD(GP_amp[:,:PeakLat], G1_amp[:,:PeakLat]))
+            Prev2_CDLat[count[1]]  = effectsize(CohenD(GP_amp[:,:PeakLat], G2_amp[:,:PeakLat]))
+            Prev3_CDLat[count[1]]  = effectsize(CohenD(GP_amp[:,:PeakLat], G3_amp[:,:PeakLat]))
+            Prev4_CDLat[count[1]]  = effectsize(CohenD(GP_amp[:,:PeakLat], G4_amp[:,:PeakLat]))
+
+            Prev1_CDRMS[count[1]]  = effectsize(CohenD(GP_rms[:,:RMS], G1_rms[:,:RMS]))
+            Prev2_CDRMS[count[1]]  = effectsize(CohenD(GP_rms[:,:RMS], G2_rms[:,:RMS]))
+            Prev3_CDRMS[count[1]]  = effectsize(CohenD(GP_rms[:,:RMS], G3_rms[:,:RMS]))
+            Prev4_CDRMS[count[1]]  = effectsize(CohenD(GP_rms[:,:RMS], G4_rms[:,:RMS]))
+
             count[1] = count[1] + 1
             # store the appropriate tags at the same positions in their respective lists
             push!(Group,GroupList[iGrp])
@@ -291,7 +312,7 @@ function Peak1_Within(data,StatTab,whichpeak="First",whichstim="2Hz",stimtype="C
         end # layer
     end # comparison of which groups
 
-    BetweenGroup = DataFrame(Group=Group, Layer=Layer, Prev1_Amp=Prev1_Amp, Prev2_Amp=Prev2_Amp, Prev3_Amp=Prev3_Amp, Prev4_Amp=Prev4_Amp,  Prev1_Lat=Prev1_Lat, Prev2_Lat=Prev2_Lat, Prev3_Lat=Prev3_Lat, Prev4_Lat=Prev4_Lat, Prev1_RMS=Prev1_RMS, Prev2_RMS=Prev2_RMS, Prev3_RMS=Prev3_RMS, Prev4_RMS=Prev4_RMS)
+    BetweenGroup = DataFrame(Group=Group, Layer=Layer, Prev1_Amp=Prev1_Amp, Prev2_Amp=Prev2_Amp, Prev3_Amp=Prev3_Amp, Prev4_Amp=Prev4_Amp,  Prev1_Lat=Prev1_Lat, Prev2_Lat=Prev2_Lat, Prev3_Lat=Prev3_Lat, Prev4_Lat=Prev4_Lat, Prev1_RMS=Prev1_RMS, Prev2_RMS=Prev2_RMS, Prev3_RMS=Prev3_RMS, Prev4_RMS=Prev4_RMS, Prev1_CDAmp=Prev1_CDAmp, Prev2_CDAmp=Prev2_CDAmp, Prev3_CDAmp=Prev3_CDAmp, Prev4_CDAmp=Prev4_CDAmp,  Prev1_CDLat=Prev1_CDLat, Prev2_CDLat=Prev2_CDLat, Prev3_CDLat=Prev3_CDLat, Prev4_CDLat=Prev4_CDLat, Prev1_CDRMS=Prev1_CDRMS, Prev2_CDRMS=Prev2_CDRMS, Prev3_CDRMS=Prev3_CDRMS, Prev4_CDRMS=Prev4_CDRMS)
 
     foldername = "AvrecPeakStats"
     if !isdir(joinpath(data,foldername))
