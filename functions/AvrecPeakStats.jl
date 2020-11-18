@@ -39,10 +39,26 @@ function PeakRatio_Between(data,Stat,whichstim="2Hz",stimtype="CL",trialtype="TA
                     continue 
                 end
                 # find the p value outcome for this comparison at both stimuli conditions
-                PAMP[count[1]] = pvalue(UnequalVarianceTTest(G1_layamp[:,:RatioAMP],G2_layamp[:,:RatioAMP]))
-                PRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_layrms[:,:RatioRMS],G2_layrms[:,:RatioRMS]))
-                CDAMP[count[1]] = effectsize(CohenD(G1_layamp[:,:RatioAMP],G2_layamp[:,:RatioAMP]))
-                CDRMS[count[1]] = effectsize(CohenD(G1_layrms[:,:RatioRMS],G2_layrms[:,:RatioRMS]))
+                if size(G1_layamp)[1] <= 1 || size(G2_layamp)[1] <= 1
+                    PAMP[count[1]] = NaN
+                else
+                    PAMP[count[1]] = pvalue(UnequalVarianceTTest(G1_layamp[:,:RatioAMP],G2_layamp[:,:RatioAMP]))
+                end
+                if size(G1_layrms)[1] <= 1 || size(G2_layrms)[1] <= 1
+                    PRMS[count[1]] = NaN
+                else
+                    PRMS[count[1]] = pvalue(UnequalVarianceTTest(G1_layrms[:,:RatioRMS],G2_layrms[:,:RatioRMS]))
+                end
+                if isnan(PAMP[count[1]])
+                    CDAMP[count[1]] = NaN
+                else
+                    CDAMP[count[1]] = effectsize(CohenD(G1_layamp[:,:RatioAMP],G2_layamp[:,:RatioAMP]))
+                end
+                if isnan(PRMS[count[1]])
+                    CDRMS[count[1]] = NaN
+                else
+                    CDRMS[count[1]] = effectsize(CohenD(G1_layrms[:,:RatioRMS],G2_layrms[:,:RatioRMS]))
+                end
 
                 count[1] = count[1] + 1
                 # store the appropriate tags at the same positions in their respective lists
@@ -121,15 +137,47 @@ function PeakRatio_Within(data,Stat,whichstim="2Hz",stimtype="CL",trialtype="TA"
             Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_3[:,:RatioRMS]))
             Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_4[:,:RatioRMS]))
             # Cohen's D
-            Prev1_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_1[:,:RatioAMP]))
-            Prev2_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_2[:,:RatioAMP]))
-            Prev3_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_3[:,:RatioAMP]))
-            Prev4_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_4[:,:RatioAMP]))
+            if isnan(Prev1_AMP[count[1]])
+                Prev1_CDAMP[count[1]]  = NaN
+            else
+                Prev1_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_1[:,:RatioAMP]))
+            end
+            if isnan(Prev2_AMP[count[1]])
+                Prev2_CDAMP[count[1]]  = NaN
+            else
+                Prev2_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_2[:,:RatioAMP]))
+            end
+            if isnan(Prev3_AMP[count[1]])
+                Prev3_CDAMP[count[1]]  = NaN
+            else
+                Prev3_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_3[:,:RatioAMP]))
+            end
+            if isnan(Prev4_AMP[count[1]])
+                Prev4_CDAMP[count[1]]  = NaN
+            else
+                Prev4_CDAMP[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioAMP], Gr_4[:,:RatioAMP]))
+            end
 
-            Prev1_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_1[:,:RatioRMS]))
-            Prev2_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_2[:,:RatioRMS]))
-            Prev3_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_3[:,:RatioRMS]))
-            Prev4_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_4[:,:RatioRMS]))
+            if isnan(Prev1_RMS[count[1]])
+                Prev1_CDRMS[count[1]]  = NaN
+            else
+                Prev1_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_1[:,:RatioRMS]))
+            end
+            if isnan(Prev2_RMS[count[1]])
+                Prev2_CDRMS[count[1]]  = NaN
+            else
+                Prev2_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_2[:,:RatioRMS]))
+            end
+            if isnan(Prev3_RMS[count[1]])
+                Prev3_CDRMS[count[1]]  = NaN
+            else
+                Prev3_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_3[:,:RatioRMS]))
+            end
+            if isnan(Prev4_RMS[count[1]])
+                Prev4_CDRMS[count[1]]  = NaN
+            else
+                Prev4_CDRMS[count[1]]  = effectsize(CohenD(Gr_Pre[:,:RatioRMS], Gr_4[:,:RatioRMS]))
+            end
             
             count[1] = count[1] + 1
             # store the appropriate tags at the same positions in their respective lists
@@ -278,20 +326,55 @@ function Peak1_Within(data,Stat,whichpeak="1st",whichstim="2Hz",stimtype="CL",tr
             #     continue
             # end - this is causing it to not take the pvalues for ANY of it but I do need a solution for the Cohen's D output if there is an error there
             # find the p value outcome for group between measurements
-            Prev1_Amp[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G1_amp[:,:PeakAmp]))
-            Prev2_Amp[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G2_amp[:,:PeakAmp]))
-            Prev3_Amp[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G3_amp[:,:PeakAmp]))
-            Prev4_Amp[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G4_amp[:,:PeakAmp]))
+            if isempty(GP_amp) || isempty(G1_amp) || (size(GP_amp)[1]==1 && size(G1_amp)[1]==1)
+                Prev1_Amp[count[1]] = NaN
+                Prev1_Lat[count[1]] = NaN
+            else
+                Prev1_Amp[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G1_amp[:,:PeakAmp]))
+                Prev1_Lat[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G1_amp[:,:PeakLat]))
+            end
+            if isempty(GP_amp) || isempty(G2_amp) || (size(GP_amp)[1]==1 && size(G2_amp)[1]==1)
+                Prev2_Amp[count[1]] = NaN
+                Prev2_Lat[count[1]] = NaN
+            else
+                Prev2_Amp[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G2_amp[:,:PeakAmp]))
+                Prev2_Lat[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G2_amp[:,:PeakLat]))
+            end
+            if isempty(GP_amp) || isempty(G3_amp) || (size(GP_amp)[1]==1 && size(G3_amp)[1]==1)
+                Prev3_Amp[count[1]] = NaN
+                Prev3_Lat[count[1]] = NaN
+            else
+                Prev3_Amp[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G3_amp[:,:PeakAmp]))
+                Prev3_Lat[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G3_amp[:,:PeakLat]))
+            end
+            if isempty(GP_amp) || isempty(G4_amp) || (size(GP_amp)[1]==1 && size(G4_amp)[1]==1)
+                Prev4_Amp[count[1]] = NaN
+                Prev4_Lat[count[1]] = NaN
+            else
+                Prev4_Amp[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G4_amp[:,:PeakAmp]))
+                Prev4_Lat[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G4_amp[:,:PeakLat]))
+            end
 
-            Prev1_Lat[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G1_amp[:,:PeakLat]))
-            Prev2_Lat[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G2_amp[:,:PeakLat]))
-            Prev3_Lat[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G3_amp[:,:PeakLat]))
-            Prev4_Lat[count[1]]  = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G4_amp[:,:PeakLat]))
-
-            Prev1_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G1_rms[:,:RMS]))
-            Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G2_rms[:,:RMS]))
-            Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G3_rms[:,:RMS]))
-            Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G4_rms[:,:RMS]))
+            if isempty(GP_rms) || isempty(G1_rms) || (size(GP_rms)[1]==1 && size(G1_rms)[1]==1)
+                Prev1_RMS[count[1]] = NaN
+            else
+                Prev1_RMS[count[1]] = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G1_rms[:,:RMS]))
+            end
+            if isempty(GP_rms) || isempty(G2_rms) || (size(GP_rms)[1]==1 && size(G2_rms)[1]==1)
+                Prev2_RMS[count[1]] = NaN
+            else
+                Prev2_RMS[count[1]] = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G2_rms[:,:RMS]))
+            end
+            if isempty(GP_rms) || isempty(G3_rms) || (size(GP_rms)[1]==1 && size(G3_rms)[1]==1)
+                Prev3_RMS[count[1]] = NaN
+            else
+                Prev3_RMS[count[1]] = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G3_rms[:,:RMS]))
+            end 
+            if isempty(GP_rms) || isempty(G4_rms) || (size(GP_rms)[1]==1 && size(G4_rms)[1]==1)
+                Prev4_RMS[count[1]] = NaN
+            else
+                Prev4_RMS[count[1]] = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G4_rms[:,:RMS]))
+            end
             #Cohen's D
             if isnan(Prev1_Amp[count[1]]) # I hate this solution so much but CohenD throws an error instead of giving a NaN output like the pvalue above
                 Prev1_CDAmp[count[1]]  = NaN

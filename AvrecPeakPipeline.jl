@@ -70,7 +70,7 @@ for iTyp = 1:length(stimtype)
             ## Peak Amp/Lat/RMS response difference
             peaks = ["1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" "10th"]
             for ipeak = 1:length(peaks)
-                @info "ipeak = $ipeak"
+
                 if ipeak <= StimHz.ClickFreq[1] # cut this to amount of detection windows
                     Stat = StimHz[StimHz[:,:OrderofClick] .== ipeak,:]
                     Avrec1Peak(figs,Stat,peaks[ipeak],freqtype[iFrq],savetype,stimtype[iTyp],TAorST[iStat])
