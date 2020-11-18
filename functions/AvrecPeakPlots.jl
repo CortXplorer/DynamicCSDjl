@@ -16,7 +16,7 @@ function AvrecPeakvsLay(figs,Tab,GroupName,whichstim="2Hz",savetype=".pdf")
         Tab_Sort = filter(row -> ! isnan(row.PeakAmp), Tab_Sort)
 
         Title = GroupName * " PeakAmp of " * MeasList[iMeas] * " at " * whichstim
-        avrecplot = @df Tab_Sort groupedboxplot(:Layer, :PeakAmp, group = :OrderofClick, bar_position = :dodge, lab= [1:parse(Int,whichstim[begin:end-2])...], title=Title, xlab = "Layer", ylab = "Peak Amplitude [mV/mm²]");
+        avrecplot = @df Tab_Sort groupedboxplot(:Layer, :PeakAmp, group = :OrderofClick, bar_position = :dodge, legend=false, title=Title, xlab = "Layer", ylab = "Peak Amplitude [mV/mm²]");
 
         name = joinpath(figs,foldername,Title) * savetype
         savefig(avrecplot, name);
