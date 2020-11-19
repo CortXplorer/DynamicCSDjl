@@ -12,6 +12,7 @@ figs    = joinpath(home,"figs")
 group   = joinpath(home,"groups")
 datap   = joinpath(home,"Data")
 
+include(joinpath(func,"csdStruct.jl"))
 include(joinpath(func,"Dynamic_CSD.jl"))
 include(joinpath(func,"SingleTrialCSD.jl"))
 include(joinpath(func,"get_csd.jl")) # used in SingleTrialCSD.jl
@@ -28,40 +29,22 @@ CondName = ["Pre" "CL"]
 for iGr = 1:length(GroupList)
     # generate lists of channels, layers, and measurements for each animal in this group
     animalList,chanList,LIIList,LIVList,LVList,LVIList,CondList = callGroup(GroupList[iGr]) # in groups folder
-
+    Group = GroupList[iGr]
     # loop through each animal (dictionary per animal)
     Animal = Dict()
     for iAn = 1:length(animalList)
 
         AnimalName = animalList[iAn]
 
-        # loop through each type of measurement condition (specified by CondName)
-        Condition = Dict()
-        for iCond = 1:length(CondName)
-            # loop through each measurement within that condition for that animal
-            Measurement = Dict()
-            for iMeas = 1:length(CondList[CondName[iCond]][iAn])
+        channels = chanList[iAn]
+        LII  = LIIList[iAn]
+        LIV  = LIVList[iAn]
+        LV   = LVList[iAn]
+        LVI  = LVIList[iAn]
+        
+        csdStruct(raw,figs,datap,Animal,AnimalName,Group,CondList,CondName,channels,LII,LIV,LV,LVI,iAn)
 
-                channels = chanList[iAn]
-                LII  = LIIList[iAn]
-                LIV  = LIVList[iAn]
-                LV   = LVList[iAn]
-                LVI  = LVIList[iAn]
-
-                measurement = AnimalName * "_" * CondList[CondName[iCond]][iAn][iMeas] * ".mat"
-                println("Analyzing measurement: " * measurement[1:end-4])
-
-                csdData,snkData = Dynamic_CSD(measurement,channels,LII,LIV,
-                    LV,LVI,raw,figs,GroupList[iGr]);
-
-                Measurement[CondList[CondName[iCond]][iAn][iMeas]] = csdData,snkData;
-            end
-            Condition[CondName[iCond]] = Measurement
-        end
-        Animal[AnimalName] = Condition
-        name = joinpath(datap,AnimalName) * "_Data.jld"
-        save(name, Animal[AnimalName])
     end
 end
 
-# to load: Data  = load("D:\\Julia\\DynamicCSDjl\\Data\\KIT05_Data.jld")
+# to load: Data  = load("D:\\DynamicCSDjl\\Data\\KIC02_Data.jld") -- NOT WORKING
