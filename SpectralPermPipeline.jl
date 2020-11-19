@@ -1,5 +1,5 @@
 # compute scalograms 
-using MAT
+using MAT, Statistics
 
 home    = @__DIR__
 data    = joinpath(home,"Data")
@@ -16,10 +16,11 @@ if !isdir(joinpath(data,foldername))
     mkdir(joinpath(data,foldername))
 end
 
-# function runCwtCSD(GroupFile, params, home)
 GroupList = ["KIC"]
 Group     = GroupList[1]
-animalList,_,LIIList,LIVList,LVList,LVIList,CondList = callGroup(Group); # in groups folder
+
+# function runCwtCSD(home, Group, params)
+animalList,_,LIIList,LIVList,LVList,LVIList,CondList = callGroup(Group); 
 anipar    = (;LIIList,LIVList,LVList,LVIList)
 stimList  = ["2Hz" "5Hz" "10Hz" "20Hz" "40Hz"]
 
@@ -41,7 +42,22 @@ runthis = [curAn*"_"*curMeas] # generate full measurement name
 thisind = findall(anDat["Data"]["measurement"] .== runthis)[1][2] #[1][2] for extracting cartesian index
 iSti = 1
 # loop through stim frequencies
-curCSD  = anDat["Data"]["CSD"][thisind][iSti]
+curCSD  = anDat["Data"]["SglTrl_CSD"][thisind][iSti]
+iLay = 1
+# loop through layers
+if iLay = 1 # change call for each layer
+curChan = anipar.LIIList[iAn]
+end
+
+if length(curChan) > 3 # take center 3 if greater than 3
+    centerChan = Int(ceil(length(curChan)/2))
+    curChan = curChan[centerChan-1:centerChan+1]
+end
+
+meanLayCSD = mean(curCSD[curChan,:,:],dims=3)
+ROI = mean(meanLayCSD,dims=1)
+
+
 
 # end function
 
