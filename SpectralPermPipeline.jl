@@ -1,5 +1,5 @@
 # compute scalograms 
-using MAT, Statistics
+using MAT, Statistics, DSP, Colors
 
 home    = @__DIR__
 data    = joinpath(home,"Data")
@@ -9,7 +9,7 @@ group   = joinpath(home,"groups")
 include(joinpath(group,"callGroup.jl"))
 
 # Initial Parameters
-params = (sampleRate=1000, startTime=-0.2, timeLimits=[-0.2 0.399], frequencyLimits=[5 500], voicesPerOctave=8, timeBandWidth=54, layers=["I_II","IV","V","VI"])
+params = (sampleRate=1000, startTime=-200, timeLimits=[-200 1377], frequencyLimits=[5 100], voicesPerOctave=8, timeBandWidth=40, layers=["I_II","IV","V","VI"])
 
 foldername = "Spectral"
 if !isdir(joinpath(data,foldername))
@@ -43,10 +43,10 @@ thisind = findall(anDat["Data"]["measurement"] .== runthis)[1][2] #[1][2] for ex
 iSti = 1
 # loop through stim frequencies
 curCSD  = anDat["Data"]["SglTrl_CSD"][thisind][iSti]
-iLay = 1
+iLay = 2
 # loop through layers
-if iLay = 1 # change call for each layer
-curChan = anipar.LIIList[iAn]
+if iLay == 2 # change call for each layer
+curChan = anipar.LIVList[iAn]
 end
 
 if length(curChan) > 3 # take center 3 if greater than 3
@@ -56,6 +56,8 @@ end
 
 meanLayCSD = mean(curCSD[curChan,:,:],dims=3)
 ROI = mean(meanLayCSD,dims=1)
+
+
 
 
 
