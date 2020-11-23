@@ -5,6 +5,7 @@ home    = @__DIR__
 data    = joinpath(home,"Data")
 func    = joinpath(home,"functions")
 group   = joinpath(home,"groups")
+figs    = joinpath(home,"figs")
 
 include(joinpath(group,"callGroup.jl"))
 
@@ -34,9 +35,13 @@ anMeas  = anDat["Data"]["measurement"]
 CLList  = ["preCL" "CL"]
 iCond = 1
 # loop through condition list iCL
+curCond = CLList[iCond]
+MeasList = CondList[CLList[iCond]][iAn]
+
 iMeas = 1
 # loop through measurements in the list iMeas
 curMeas = CondList[CLList[iCond]][iAn][iMeas]
+curCond = curCond * "_" * string(iMeas)
 runthis = [curAn*"_"*curMeas] # generate full measurement name
 
 thisind = findall(anDat["Data"]["measurement"] .== runthis)[1][2] #[1][2] for extracting cartesian index
