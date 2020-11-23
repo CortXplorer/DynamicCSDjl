@@ -1,5 +1,5 @@
 
-function CWTanalysis(ROI,params,curAn="KIC02",curCond="preCL_1",curLay="IV")
+function CWTanalysis(figs,ROI,params,curAn="KIC02",curCond="preCL_1",curLay="IV",curStim="2Hz")
 
     time     = -1:(1/params.sampleRate):1
     ROItime  = [-200:size(ROI)[2]-200-1...]
@@ -18,16 +18,16 @@ function CWTanalysis(ROI,params,curAn="KIC02",curCond="preCL_1",curLay="IV")
     datpower = Array{Float64}(undef, num_frex, size(ROI)[2])
     datphsco = Array{Float64}(undef, num_frex, size(ROI)[2])
 
-    baseidx  = ([params.startTime+1 0]) .+ params.startTime*-1 # time of baseline 
+    baseidx  = ([params.startTime+1 params.startTime+100]) .+ params.startTime*-1 # time of baseline (100 away from 0 to avoid most temporal smoothing)
 
     for fi=1:num_frex
-
         wavelet = sqrt(1/(s[fi]*sqrt(pi))) * exp.(2*1im*pi*frex[fi].*time) .* exp.(-time.^2 ./ (2*(s[fi]^2)))
 
         datconv = same_conv(ROI[:], wavelet)
         datconvshaped = reshape(datconv,size(ROI)[2],size(ROI)[3])
-        # Average power over trials (this code performs baseline transform)
+        # Average power over trials
         temppower = mean(abs.(datconvshaped).^2, dims=2) # POWER 
+        # decibel change baseline normalization
         temppower = 10*log10.(temppower ./ mean(temppower[baseidx[1]:baseidx[2]]))
         datpower[fi,:] = temppower
 
@@ -45,10 +45,9 @@ function CWTanalysis(ROI,params,curAn="KIC02",curCond="preCL_1",curLay="IV")
         yaxis=:log,
         formatter =x->round(Int, x),
         ytick=exp10.(range(log10(min_freq),log10(max_freq),length=10)),
-        title="Power of " * curAn * " " * curCond * " layer " * params.layers[iLay]
+        title="Power of " * curAn * " " * curCond * " layer " * curLay * " " * curStim
     );
 
-    
     phsco_plot = heatmap(
         ROItime,
         frex,
@@ -59,7 +58,7 @@ function CWTanalysis(ROI,params,curAn="KIC02",curCond="preCL_1",curLay="IV")
         yaxis=:log,
         formatter =x->round(Int, x),
         ytick=exp10.(range(log10(min_freq),log10(max_freq),length=10)),
-        title="Phase Co of " * curAn * " " * curCond * " layer " * params.layers[iLay]
+        title="Phase Co of " * curAn * " " * curCond * " layer " * curLay * " " * curStim
     );
 
     full_plot = plot(power_plot, phsco_plot, titlefontsize = 10, size=(900,400))
@@ -69,7 +68,7 @@ function CWTanalysis(ROI,params,curAn="KIC02",curCond="preCL_1",curLay="IV")
         mkdir(joinpath(figs,foldername))
     end
 
-    name = joinpath(figs,foldername,curAn) * "_" * curCond * "_" * params.layers[iLay] * "_ScaloPower.pdf"
+    name = joinpath(figs,foldername,curAn) * "_" * curCond * "_" * curLay * "_" * curStim * "_Scalograms.pdf"
     savefig(full_plot, name)
 
     return datpower, datphsco
