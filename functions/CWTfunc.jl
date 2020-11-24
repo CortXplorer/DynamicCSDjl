@@ -1,3 +1,73 @@
+function CWT_Loop(figs, animalList, CondList, CLList, params, anipar)
+    # Loop through animals in Group
+    Animal = Dict()
+    for iAn = 1:length(animalList)
+
+        # loop through animals iAn
+        curAn   = animalList[iAn]
+        anDat   = matread(joinpath(data,(curAn * "_Data.mat")));
+        anMeas  = anDat["Data"]["measurement"]
+
+        # Loop through the condition list
+        Condition = Dict()
+        for iCond = 1:length(CLList)
+            # loop through condition list iCL
+            MeasList = CondList[CLList[iCond]][iAn]
+
+            # Loop through measurements
+            Measurement = Dict()
+            for iMeas = 1:length(MeasList)
+
+                curMeas = CondList[CLList[iCond]][iAn][iMeas]
+                curCond = CLList[iCond] * "_" * string(iMeas)
+                runthis = [curAn*"_"*curMeas] # generate full measurement name
+
+                thisind = findall(anDat["Data"]["measurement"] .== runthis)[1][2] #[1][2] for extracting cartesian index
+                println("Analyzing $runthis")
+
+                # Loop through stimulation frequencies
+                StimFreq = Dict()
+                for iSti = 1:length(params.stimList)
+
+                    curCSD  = anDat["Data"]["SglTrl_CSD"][thisind][iSti];
+                    curStim = params.stimList[iSti]
+
+                    # Loop through layers
+                    Layers = Dict()
+                    for iLay = 1:length(params.layers)
+
+                        curLay = params.layers[iLay]
+                        if curLay == "I_II"
+                            curChan = anipar.LIIList[iAn]
+                        elseif curLay == "IV"
+                            curChan = anipar.LIVList[iAn]
+                        elseif curLay == "V"
+                            curChan = anipar.LVList[iAn]
+                        elseif curLay == "VI"
+                            curChan = anipar.LVIList[iAn]
+                        end
+
+                        if length(curChan) > 3 # take center 3 if greater than 3
+                            centerChan = Int(ceil(length(curChan)/2))
+                            curChan = curChan[centerChan-1:centerChan+1]
+                        end
+
+                        # Here is the region of interest accross trials
+                        ROI = mean(curCSD[curChan,:,:],dims=1)
+
+                        Datpower, Datphsco = CWTanalysis(figs,ROI,params,curAn,curCond,curLay,curStim)
+                        Layers[curLay] = Datpower, Datphsco;
+                    end # Layers
+                    StimFreq[curStim] = Layers
+                end # Stim Frequencies
+                Measurement[curCond] = StimFreq
+            end # Condition/Measurement
+            Condition[CLList[iCond]] = Measurement
+        end # Condition List
+        Animal[curAn] = Condition
+    end # Animal
+    return Animal
+end
 
 function CWTanalysis(figs,ROI,params,curAn="KIC02",curCond="preCL_1",curLay="IV",curStim="2Hz")
 
