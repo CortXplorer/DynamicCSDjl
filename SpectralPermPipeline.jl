@@ -1,5 +1,5 @@
-# compute scalograms 
 using MAT, Statistics, DSP, Colors
+using JLD2, FileIO
 
 home    = @__DIR__
 data    = joinpath(home,"Data")
@@ -13,14 +13,14 @@ include(joinpath(func,"CWTfunc.jl"))
 # Parameters
 params = (
     sampleRate=1000, startTime=-200, timeLimits=[-200 1377], frequencyLimits=[8 100], timeBandWidth=40, 
-    stimList=["2Hz","5Hz","10Hz","20Hz","40Hz"], 
+    stimList=["twoHz","fiveHz","tenHz","twentyHz","fortyHz"], 
     layers=["I_II","IV","V","VI"], 
     osciBands=["alpha","beta low","beta high","gamma low","gamma high"], bandRanges=[[1:8...],[9:15...],[16:23...],[24:35...],[36:40...]])
 # real ranges captured by these data: alpha=(8:12), beta_low=(13:18), beta_high=(19:30), gamma_low=(31:60), gamma_high=(61:100)
 ## GROUP determination
-GroupList = ["KIC" "KIT"]
+GroupList = ["KIC" "KIT" "KIV"]
 ## Conditions to run
-CLList  = ["preCL" "CL"]
+CLList  = ["preCL" "CL" "preAM" "AM"] 
 ## Conditional picture; takepic == 1 if you do want figure output
 takepic = 0
 
@@ -39,15 +39,21 @@ for iGr = 1:length(GroupList)
     animalList,_,LIIList,LIVList,LVList,LVIList,CondList = callGroup(Group); 
     anipar    = (;LIIList,LIVList,LVList,LVIList)
     if Group == "KIC"
-        KIC_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
+        global KIC_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
     elseif Group == "KIT"
-        KIT_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
+        global KIT_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
     elseif Group == "KIV"
-        KIV_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
+        global KIV_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
     else
         error("Group name does not match what is run through this script, please edit names or script")
     end
 end
+
+save("KIC_WT.jld2","KIC_WT",KIC_WT)
+save("KIT_WT.jld2","KIT_WT",KIT_WT)
+save("KIV_WT.jld2","KIV_WT",KIV_WT)
+#KIC_WT = load("KIC_WT.jld2")["KIC_WT"]
+#KIC_WT["KIC02"]["preCL"]["preCL_1"]["2Hz"]["IV"]
 
 # generate spectral plots (osci bands sorted by group and then frequency)
 
