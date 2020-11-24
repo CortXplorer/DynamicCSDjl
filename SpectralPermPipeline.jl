@@ -21,6 +21,8 @@ params = (
 GroupList = ["KIC" "KIT"]
 ## Conditions to run
 CLList  = ["preCL" "CL"]
+## Conditional picture; takepic == 1 if you do want figure output
+takepic = 0
 
 foldername = "Spectral"
 if !isdir(joinpath(data,foldername))
@@ -28,16 +30,20 @@ if !isdir(joinpath(data,foldername))
 end
 
 # Loop through Groups to use function CWT_Loop which splits by animals, condition, measurement, stim frequency, and layer and outputs a dictionary with a power and phase coherence dataset for each chunk
+KIC_WT = []
+KIT_WT = []
+KIV_WT = []
+
 for iGr = 1:length(GroupList)
     Group = GroupList[iGr]
     animalList,_,LIIList,LIVList,LVList,LVIList,CondList = callGroup(Group); 
     anipar    = (;LIIList,LIVList,LVList,LVIList)
     if Group == "KIC"
-        KIC_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar)
+        KIC_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
     elseif Group == "KIT"
-        KIT_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar)
+        KIT_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
     elseif Group == "KIV"
-        KIV_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar)
+        KIV_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
     else
         error("Group name does not match what is run through this script, please edit names or script")
     end

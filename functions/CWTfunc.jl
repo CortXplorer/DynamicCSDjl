@@ -1,4 +1,4 @@
-function CWT_Loop(figs, animalList, CondList, CLList, params, anipar)
+function CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
     # Loop through animals in Group
     Animal = Dict()
     for iAn = 1:length(animalList)
@@ -70,6 +70,7 @@ function CWT_Loop(figs, animalList, CondList, CLList, params, anipar)
 end
 
 function CWTanalysis(figs,ROI,params,curAn="KIC02",curCond="preCL_1",curLay="IV",curStim="2Hz")
+# Adapted from Asim Hassan Dar's code following the Mike X Cohen analyzing neural time series 23.11.20
 
     time     = -1:(1/params.sampleRate):1
     ROItime  = [-200:size(ROI)[2]-200-1...]
@@ -105,42 +106,43 @@ function CWTanalysis(figs,ROI,params,curAn="KIC02",curCond="preCL_1",curLay="IV"
         datphsco[fi,:] = tempphsco
     end
 
-    power_plot = heatmap(
-        ROItime,
-        frex,
-        datpower,
-        levels=40,
-        clim=(-10,10),
-        xlims=(-200,1170),
-        yaxis=:log,
-        formatter =x->round(Int, x),
-        ytick=exp10.(range(log10(min_freq),log10(max_freq),length=10)),
-        title="Power of " * curAn * " " * curCond * " layer " * curLay * " " * curStim
-    );
+    if takepic == 1
+        power_plot = heatmap(
+            ROItime,
+            frex,
+            datpower,
+            levels=40,
+            clim=(-10,10),
+            xlims=(-200,1170),
+            yaxis=:log,
+            formatter =x->round(Int, x),
+            ytick=exp10.(range(log10(min_freq),log10(max_freq),length=10)),
+            title="Power of " * curAn * " " * curCond * " layer " * curLay * " " * curStim
+        );
 
-    phsco_plot = heatmap(
-        ROItime,
-        frex,
-        datphsco,
-        levels=40,
-        clim=(0,1),
-        xlims=(-200,1170),
-        yaxis=:log,
-        formatter =x->round(Int, x),
-        ytick=exp10.(range(log10(min_freq),log10(max_freq),length=10)),
-        title="Phase Co of " * curAn * " " * curCond * " layer " * curLay * " " * curStim
-    );
+        phsco_plot = heatmap(
+            ROItime,
+            frex,
+            datphsco,
+            levels=40,
+            clim=(0,1),
+            xlims=(-200,1170),
+            yaxis=:log,
+            formatter =x->round(Int, x),
+            ytick=exp10.(range(log10(min_freq),log10(max_freq),length=10)),
+            title="Phase Co of " * curAn * " " * curCond * " layer " * curLay * " " * curStim
+        );
 
-    full_plot = plot(power_plot, phsco_plot, titlefontsize = 10, size=(900,400))
+        full_plot = plot(power_plot, phsco_plot, titlefontsize = 10, size=(900,400))
 
-    foldername = "Spectral"
-    if !isdir(joinpath(figs,foldername))
-        mkdir(joinpath(figs,foldername))
+        foldername = "Spectral"
+        if !isdir(joinpath(figs,foldername))
+            mkdir(joinpath(figs,foldername))
+        end
+
+        name = joinpath(figs,foldername,curAn) * "_" * curCond * "_" * curLay * "_" * curStim * "_Scalograms.pdf"
+        savefig(full_plot, name)
     end
-
-    name = joinpath(figs,foldername,curAn) * "_" * curCond * "_" * curLay * "_" * curStim * "_Scalograms.pdf"
-    savefig(full_plot, name)
-
     return datpower, datphsco
 end
 
