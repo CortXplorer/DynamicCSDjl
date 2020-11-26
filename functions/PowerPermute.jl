@@ -2,16 +2,16 @@ function PowerPermBetween(figs,WTof1,WTof2,Group1,Group2,curMeas,curStim,curLay,
     curComp = Group1 * "v" * Group2
     animals1,_,_,_,_,_,_ = callGroup(Group1); 
     grpsize1 = length(WTof1)
-    thisGrp1 = Array{Float64}(undef, 40, 1377, grpsize1) 
+    thisGrp1 = Array{Float64}(undef, 40, 1377, grpsize1); 
     for iwt = 1:grpsize1
-        thisGrp1[:,:,iwt] = WTof1[animals1[iwt]][curMeas[begin:end-2]][curMeas][curStim][curLay][1][40,1:1376]
+        thisGrp1[:,:,iwt] = WTof1[animals1[iwt]][curMeas[begin:end-2]][curMeas][curStim][curLay][1][:,1:1377]
     end
 
     animals2,_,_,_,_,_,_ = callGroup(Group2); 
     grpsize2 = length(WTof2)
     thisGrp2 = Array{Float64}(undef, 40, 1377, grpsize2) 
     for iwt = 1:grpsize2
-        thisGrp2[:,:,iwt] = WTof2[animals2[iwt]][curMeas[begin:end-2]][curMeas][curStim][curLay][1][40,1:1376]
+        thisGrp2[:,:,iwt] = WTof2[animals2[iwt]][curMeas[begin:end-2]][curMeas][curStim][curLay][1][:,1:1377]
     end
 
     ## Degrees of Freedom and t Threshold
@@ -82,7 +82,7 @@ function PowerPermBetween(figs,WTof1,WTof2,Group1,Group2,curMeas,curStim,curLay,
     if takepic == 1
         # difference figs
         # NOTE, when loop is made, this will have to be updated to take in which layer/stim etc and name the figs dynamically
-        differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters, Group1, Group2, curComp, curMeas,curStim,curLay)
+        differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters, Group1, Group2, curComp, curMeas,curStim,curLay,"power")
 
         PermPlot = violin(
             [perm_clustermass, perm_alpha, perm_betal, perm_betah, perm_gammal, perm_gammah],
