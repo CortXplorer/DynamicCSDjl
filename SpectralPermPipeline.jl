@@ -1,5 +1,5 @@
 using MAT, Statistics, DSP, Colors
-using JLD2, FileIO
+using JLD2, FileIO, CSV
 using Random, DataFrames, StatsPlots
 using HypothesisTests
 
@@ -88,8 +88,8 @@ for iMeas = 1:length(MeasList)
     end # Stim frequency
 end # Measurement
 
-save(joinpath(spect,"PowerBetween.jld2"),"PowerBetween",PermOut)
-# PowerBetween = load(joinpath(spect,"PowerBetween.jld2"))["PowerBetween"] #yaaaasss
+CSV.write(joinpath(spect,"PowerBetween.csv"),PermOut)
+# PowerBetween = CSV.File(joinpath(spect,"PowerBetween.csv")) |> DataFrame
 
 println("Phase Coherence Permutation Between Groups")
 PermOut = []
@@ -114,8 +114,8 @@ for iMeas = 1:length(MeasList)
     end # Stim frequency
 end # Measurement
 
-save(joinpath(spect,"PhaseBetween.jld2"),"PhaseBetween",PermOut)
-# PhaseBetween = load(joinpath(spect,"PhaseBetween.jld2"))["PhaseBetween"] 
+CSV.write(joinpath(spect,"PhaseBetween.csv"),PermOut)
+# PhaseBetween = CSV.File(joinpath(spect,"PhaseBetween.csv")) |> DataFrame
 
 # within group
 
