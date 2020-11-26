@@ -1,6 +1,7 @@
 using MAT, Statistics, DSP, Colors
 using JLD2, FileIO
 using Random, DataFrames, StatsPlots
+using HypothesisTests
 
 home    = @__DIR__
 data    = joinpath(home,"Data")
@@ -13,6 +14,7 @@ include(joinpath(group,"callGroup.jl"))
 include(joinpath(func,"CWTfunc.jl"))
 include(joinpath(func,"Permfunctions.jl"))
 include(joinpath(func,"PowerPermute.jl"))
+include(joinpath(func,"PhasePermute.jl"))
 
 # Parameter
 params = (
@@ -26,7 +28,7 @@ GroupList = ["KIC" "KIT" "KIV"]
 ## Conditions to run
 CLList  = ["preCL" "CL" "preAM" "AM"] 
 ## Conditional picture; takepic == 1 if you do want figure output
-takepic = 0
+takepic = 1
 
 # Loop through Groups to use function CWT_Loop which splits by animals, condition, measurement, stim frequency, and layer and outputs a dictionary with a power and phase coherence dataset for each chunk
 KIC_WT = []
@@ -58,12 +60,12 @@ KIC_WT = load(joinpath(spect,"KIC_WT.jld2"))["KIC_WT"]
 KIT_WT = load(joinpath(spect,"KIT_WT.jld2"))["KIT_WT"]
 KIV_WT = load(joinpath(spect,"KIV_WT.jld2"))["KIV_WT"]
 
-MeasList = ["preCL_1" "CL_1" "CL_2" "CL_3" "CL_4" "preAM_1" "AM_1" "AM_2" "AM_3" "AM_4"]
+MeasList = ["preCL_1" "CL_1" "CL_2" "CL_3" "CL_4" "preAM_1" "AM_1" "AM_2" "AM_3"]
 
 # generate spectral plots (osci bands sorted by group and then frequency)
 
-##### spectral power permutations
-### between groups
+println("Power Permutation Between Groups")
+# ADD: Cohen's D output column
 PermOut = []
 for iMeas = 1:length(MeasList)
     curMeas = MeasList[iMeas]
@@ -71,16 +73,13 @@ for iMeas = 1:length(MeasList)
         curStim = params.stimList[iSti]
         for iLay = 1:length(params.layers)
             curLay = params.layers[iLay]
-
-            println("Measurement $curMeas, Stimulus $curStim, Layer $iLay")
-            println("one")
+            # FIX: ERROR: KeyError: key "AM_4" not found (have it check for this key and skip if it's not there)
+            println("Power Measurement $curMeas, Stimulus $curStim, Layer $iLay")
             Permout1 = PowerPermBetween(figs,KIT_WT,KIC_WT,"KIT","KIC",curMeas,curStim,curLay,takepic)
-            println("two")
             Permout2 = PowerPermBetween(figs,KIT_WT,KIV_WT,"KIT","KIV",curMeas,curStim,curLay,takepic)
-            println("three")
             Permout3 = PowerPermBetween(figs,KIC_WT,KIV_WT,"KIC","KIV",curMeas,curStim,curLay,takepic)
 
-            if @isdefined PermOut
+            if !isempty(PermOut)
                 PermOut = vcat(PermOut,Permout1,Permout2,Permout3)
             else
                 PermOut = vcat(Permout1,Permout2,Permout3)
@@ -89,13 +88,35 @@ for iMeas = 1:length(MeasList)
     end # Stim frequency
 end # Measurement
 
+save(joinpath(spect,"PowerBetween.jld2"),"PowerBetween",PermOut)
+# PowerBetween = load(joinpath(spect,"PowerBetween.jld2"))["PowerBetween"] #yaaaasss
 
-Measurement CL_1, Stimulus twoHz, Layer 1
-ERROR: DimensionMismatch("tried to assign 40×700 array to 40×1377×1 destination")
-at D:\DynamicCSDjl\functions\PowerPermute.jl:14
+println("Phase Coherence Permutation Between Groups")
+PermOut = []
+for iMeas = 1:length(MeasList)
+    curMeas = MeasList[iMeas]
+    for iSti = 1:length(params.stimList)
+        curStim = params.stimList[iSti]
+        for iLay = 1:length(params.layers)
+            curLay = params.layers[iLay]
+            # FIX: ERROR: KeyError: key "AM_4" not found (have it check for this key and skip if it's not there)
+            println("Phase Measurement $curMeas, Stimulus $curStim, Layer $iLay")
+            Permout1 = PhasePermBetween(figs,KIT_WT,KIC_WT,"KIT","KIC",curMeas,curStim,curLay,takepic)
+            Permout2 = PhasePermBetween(figs,KIT_WT,KIV_WT,"KIT","KIV",curMeas,curStim,curLay,takepic)
+            Permout3 = PhasePermBetween(figs,KIC_WT,KIV_WT,"KIC","KIV",curMeas,curStim,curLay,takepic)
+
+            if !isempty(PermOut)
+                PermOut = vcat(PermOut,Permout1,Permout2,Permout3)
+            else
+                PermOut = vcat(Permout1,Permout2,Permout3)
+            end
+        end # layer
+    end # Stim frequency
+end # Measurement
+
+save(joinpath(spect,"PhaseBetween.jld2"),"PhaseBetween",PermOut)
+# PhaseBetween = load(joinpath(spect,"PhaseBetween.jld2"))["PhaseBetween"] 
 
 # within group
 
-# spectral phase coherence permutations
-# between group
 # within group
