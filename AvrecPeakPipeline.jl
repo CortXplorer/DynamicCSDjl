@@ -64,14 +64,12 @@ for iTyp = 1:length(stimtype)
                 StimHz = PeakDatST[PeakDatST[:,:ClickFreq] .== parse(Int,freqtype[iFrq][begin:end-2]),:]
             end
 
-            # remove group KIV for now until it is a proper size
-            StimHz = StimHz[StimHz[:,:Group] .!= "KIV",:]
-
             ## Peak Amp/Lat/RMS response difference
             peaks = ["1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" "10th"]
             for ipeak = 1:length(peaks)
 
                 if ipeak <= StimHz.ClickFreq[1] # cut this to amount of detection windows
+                    # pull out current response window (i.e. 1st peak)
                     Stat = StimHz[StimHz[:,:OrderofClick] .== ipeak,:]
                     Avrec1Peak(figs,Stat,peaks[ipeak],freqtype[iFrq],savetype,stimtype[iTyp],TAorST[iStat])
                     Peak1_Between(data,Stat,peaks[ipeak],freqtype[iFrq],stimtype[iTyp],TAorST[iStat])
