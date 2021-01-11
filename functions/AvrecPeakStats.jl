@@ -279,7 +279,7 @@ function Peak1_Within(data,Stat,whichpeak="1st",whichstim="2Hz",stimtype="CL",tr
 
     # Setup for simple 2 sample t test from HypothesisTests ->
     # 4 within group comparisons per group across 5 measurement types and 5 layers:
-    GroupList    = ["KIC" "KIT"] #"KIV"
+    GroupList    = ["KIC" "KIT" "KIV"] 
     LayList     = unique(Stat[:,:Layer])
     MeasList    = unique(Stat[:,:Measurement])
     # containers for the table columns: 
