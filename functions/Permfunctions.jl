@@ -74,23 +74,23 @@ function makeMWutest_cluster(thisGrp1,thisGrp2,isobs=1)
     end
 end
 
-function differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters, Group1, Group2, curComp, curMeas,curStim,curLay,typefig="power")
+function differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters, Group1, Group2, curComp, curMeas,curStim,curLay,cuttime,typefig="power")
     if typefig == "power"
-        CLIM = (-10,10)
-        typecall = " Power.png"
+        CLIM = (-5,5)
+        typecall = "_Power.png"
     elseif typefig == "phase"
         CLIM = (-0.5,1.5)
         typecall = "_Phase.png"
     end
     frex = exp10.(range(log10(params.frequencyLimits[1]),log10(params.frequencyLimits[2]), length=params.timeBandWidth))
-    figTime = [-200:1176...]
+    figTime = [cuttime...]
     Gr1fig = heatmap(
         figTime, 
         frex,
         grp1_mean,
         levels=40,
         clim=CLIM,
-        xlims=(-200,1176),
+        xlims=(cuttime[begin],cuttime[end]),
         yaxis=:log,
         formatter =x->round(Int, x),
         ytick=exp10.(range(log10(params.frequencyLimits[1]),log10(params.frequencyLimits[2]),length=10)),
@@ -103,7 +103,7 @@ function differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters,
         grp2_mean,
         levels=40,
         clim=CLIM,
-        xlims=(-200,1176),
+        xlims=(cuttime[begin],cuttime[end]),
         yaxis=:log,
         formatter =x->round(Int, x),
         ytick=exp10.(range(log10(params.frequencyLimits[1]),log10(params.frequencyLimits[2]),length=10)),
@@ -116,7 +116,7 @@ function differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters,
         difmeans,
         levels=40,
         clim=CLIM,
-        xlims=(-200,1176),
+        xlims=(cuttime[begin],cuttime[end]),
         yaxis=:log,
         formatter =x->round(Int, x),
         ytick=exp10.(range(log10(params.frequencyLimits[1]),log10(params.frequencyLimits[2]),length=10)),
@@ -128,7 +128,7 @@ function differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters,
         frex,
         clusters,
         levels=40,
-        xlims=(-200,1176),
+        xlims=(cuttime[begin],cuttime[end]),
         yaxis=:log,
         formatter =x->round(Int, x),
         ytick=exp10.(range(log10(params.frequencyLimits[1]),log10(params.frequencyLimits[2]),length=10)),
@@ -136,6 +136,6 @@ function differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters,
     );
 
     full_plot = plot(Gr1fig,Gr2fig,Diffig,Clufig,size=(900,600));
-    name = joinpath(figs,"Spectral",curComp) * "_" * curMeas * "_" * curStim * "_" * curLay * typecall
-            savefig(full_plot, name)
+    name = joinpath(figs,"Spectral",curComp) * "_" * string(cuttime) * "ms_" * curMeas * "_" * curStim * "_" * curLay * typecall
+    savefig(full_plot, name)
 end

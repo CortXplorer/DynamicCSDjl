@@ -12,9 +12,6 @@ spect   = joinpath(data,"Spectral")
 
 include(joinpath(group,"callGroup.jl"))
 include(joinpath(func,"CWTfunc.jl"))
-include(joinpath(func,"Permfunctions.jl"))
-include(joinpath(func,"PowerPermute.jl"))
-include(joinpath(func,"PhasePermute.jl"))
 
 # Parameter
 params = (
@@ -62,12 +59,16 @@ KIC_WT = load(joinpath(spect,"KIC_WT.jld2"))["KIC_WT"]
 KIT_WT = load(joinpath(spect,"KIT_WT.jld2"))["KIT_WT"]
 KIV_WT = load(joinpath(spect,"KIV_WT.jld2"))["KIV_WT"]
 
-MeasList = ["preCL_1" "CL_1"  "preAM_1" "AM_1"] #"CL_2" "CL_3" "CL_4" "AM_2" "AM_3"
+MeasList = ["preCL_1" "CL_1"  "preAM_1" "AM_1"] 
 
 # generate spectral plots (osci bands sorted by group and then frequency)
 
+include(joinpath(func,"Permfunctions.jl"))
+include(joinpath(func,"RunPermuations.jl"))
 
+# this specifies the range of time accross which to permute 
+cuttime = 195:295 # 1:1377 is full length, 200:300 is first 100 ms after tone onset
+PermBetween(figs,spect,KIT_WT,KIC_WT,KIV_WT,MeasList,params,cuttime)
 
 # within group
-
-# within group
+#PermWithin(figs,spect,KIT_WT,KIC_WT,KIV_WT,MeasList,params)
