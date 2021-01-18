@@ -104,3 +104,7 @@ for iTyp = 1:length(stimtype)
         end
     end
 end
+
+include(joinpath(func,"CohensProg.jl"))
+
+CohensProg(figs, data, freqtype, stimtype, savetype)
