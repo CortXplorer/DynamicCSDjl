@@ -36,16 +36,16 @@ function makettest_cluster(Group1,Group2,Tthresh,isobs=1)
     end
 end
 
-function makeMWutest_cluster(thisGrp1,thisGrp2,isobs=1)
+function makeMWutest_cluster(thisGrp1,thisGrp2,cuttime,isobs=1)
     # take the group data, run a mann whitney u-test, convert to clusters, pull out clustermass number 
 
     grp1_mean = mean(thisGrp1,dims=3)[:,:]
     grp2_mean = mean(thisGrp2,dims=3)[:,:]
 
     ## Permutation step 2 - t test 
-    mwutest = Array{Float64}(undef, 40, 1377);
+    mwutest = Array{Float64}(undef, 40, length(cuttime));
     for i = 1:40
-        for j = 1:1377
+        for j = 1:length(cuttime)
             mwutest[i,j] = pvalue(MannWhitneyUTest(thisGrp1[i,j,:], thisGrp2[i,j,:]))
         end
     end
@@ -79,7 +79,7 @@ function differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters,
         CLIM = (-5,5)
         typecall = "_Power.png"
     elseif typefig == "phase"
-        CLIM = (-0.5,1.5)
+        CLIM = (0.0,0.8)
         typecall = "_Phase.png"
     end
     frex = exp10.(range(log10(params.frequencyLimits[1]),log10(params.frequencyLimits[2]), length=params.timeBandWidth))
@@ -136,6 +136,6 @@ function differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters,
     );
 
     full_plot = plot(Gr1fig,Gr2fig,Diffig,Clufig,size=(900,600));
-    name = joinpath(figs,"Spectral",curComp) * "_" * string(cuttime) * "ms_" * curMeas * "_" * curStim * "_" * curLay * typecall
+    name = joinpath(figs,"Spectral",curComp) * "_" * string(cuttime[begin]) * "to" * string(cuttime[end]) * "ms_" * curMeas * "_" * curStim * "_" * curLay * typecall
     savefig(full_plot, name)
 end
