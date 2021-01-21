@@ -1,3 +1,30 @@
+function GenGroupWT(spect,figs,params,GroupList,CLList,takepic)
+    # Loop through Groups to use function CWT_Loop which splits by animals, condition, measurement, stim frequency, and layer and outputs a dictionary with a power and phase coherence dataset for each chunk
+    KIC_WT = []
+    KIT_WT = []
+    KIV_WT = []
+
+    for iGr = 1:length(GroupList)
+        Group = GroupList[iGr]
+        animalList,_,LIIList,LIVList,LVList,LVIList,CondList = callGroup(Group); 
+        anipar    = (;LIIList,LIVList,LVList,LVIList)
+        if Group == "KIC"
+            global KIC_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
+        elseif Group == "KIT"
+            global KIT_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
+        elseif Group == "KIV"
+            global KIV_WT = CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
+        else
+            error("Group name does not match what is run through this script, please edit names or script")
+        end
+    end
+
+
+    save(joinpath(spect,"KIC_WT.jld2"),"KIC_WT",KIC_WT)
+    save(joinpath(spect,"KIT_WT.jld2"),"KIT_WT",KIT_WT)
+    save(joinpath(spect,"KIV_WT.jld2"),"KIV_WT",KIV_WT)
+end
+
 function CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
     # Loop through animals in Group
     Animal = Dict()
