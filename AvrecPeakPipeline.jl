@@ -11,7 +11,7 @@ data    = joinpath(home,"Data")
 include(joinpath(func,"AvrecPeakPlots.jl"))
 include(joinpath(func,"AvrecPeakStats.jl"))
 
-savetype = ".png" # choose how all figures are saved, default ".pdf"
+savetype = ".pdf" # choose how all figures are saved, default ".pdf"
 stimtype = ["CL" "AM"]
 freqtype = ["2Hz" "5Hz" "10Hz" "20Hz" "40Hz"]
 
