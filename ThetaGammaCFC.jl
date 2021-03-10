@@ -21,7 +21,7 @@ anCSD  = anDat["Data"]["SglTrl_CSD"]; # all single trial CSD data for full recor
 anCon  = anDat["Data"]["Condition"];  # all conditions for full recording day
 
 # loop through relevant conditions
-# let's start with the preCLtono
+# let's start with the preCL
 ConIdx = (LinearIndices(anCon))[findall(x -> x == "preCL_1", anCon)] #findall gives cartesian coordinates so we have to further translate to index position
 curCSD = anCSD[ConIdx][1]; # pull out the CSD at that position
 # loop through frequencies 
@@ -29,8 +29,8 @@ curCSD = anCSD[ConIdx][1]; # pull out the CSD at that position
 curCSD = curCSD[2][:,:,1]  # pull out the 5hz signal for now in the FIRST single trial
 
 # loop through layers (may flip order to layers then trials)
-# to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle 3 channels of layer IV. Then we average them and that's our final signal to process:
-layIV = mean(curCSD[6:8,:], dims =1)
+# to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle channels of layer IV. That's our final signal to process:
+layIV = curCSD[7,:]
 
 # ## let's visualize the SPECTRUM
 # t   = [1:Int(1000/sr):length(layIV)...] #time accounting for sr
@@ -64,54 +64,46 @@ b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming") #PyCall
 Vlo = signal.filtfilt(b, 1, layIV) #PyCall
 
 # set a passband [31-60] Hz 
-Wn  = [31:60...] #low gamma band (in KIC02 I'm seeing a spike at 50 Hz)
+Wn  = [31:60...] #low gamma band (in KIC02 preCL_1 I'm seeing a spike at 50 Hz, I will have to find a way to verify that this is the target of interest accross measurements/animals)
 b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming")
 Vhi = signal.filtfilt(b, 1, layIV)
 
 ## visualize the filters
-plot(layIV', label = "signal")
-plot!(Vlo', label = "theta")
-plot!(Vhi', label = "low gamma")
+plot(layIV, label = "signal")
+plot!(Vlo, label = "theta")
+plot!(Vhi, label = "low gamma")
 
-    # phi = angle(signal.hilbert(Vlo))     # Compute phase of low-freq signal
-    # amp = abs(signal.hilbert(Vhi))       # Compute amplitude of high-freq signal
+phi = angle.(signal.hilbert(Vlo)) # Compute phase of low-freq signal
+amp = abs.(signal.hilbert(Vhi))   # Compute amplitude of high-freq signal
 
-    # p_bins = arange(-pi,pi,0.1)          # To compute CFC, define phase bins,
-    # a_mean = zeros(size(p_bins)-1)       # ... variable to hold the amplitude,
-    # p_mean = zeros(size(p_bins)-1)       # ... and variable to hold the phase.
-    # for k in range(size(p_bins)-1):      # For each phase bin,
-    #     pL = p_bins[k]                   #... get lower phase limit,
-    #     pR = p_bins[k+1]                 #... get upper phase limit.
-    #     indices=(phi>=pL) & (phi<pR)     #Find phases falling in this bin,
-    #     a_mean[k] = mean(amp[indices])   #... compute mean amplitude,
-    #     p_mean[k] = mean([pL, pR])       #... save center phase.
-    # plot(p_mean, a_mean)                 #Plot the phase versus amplitude,
-    # ylabel('High-frequency amplitude')   #... with axes labeled.
-    # xlabel('Low-frequency phase')
-    # title('CFC');
+phasebins = [-pi:0.1:pi...] # To compute CFC, define phase bins,
+ampmean   = zeros(1,length(phasebins)-1) # preallocate 
+phsmean   = zeros(1,length(phasebins)-1) # preallocate
 
+for iBin = 1:length(phasebins)-1
+    phLow = p_bins[iBin]   # lower limit
+    phHi  = p_bins[iBin+1] # upper limit
+    ind   = findall(phLow .<= phi .< phHi) # find phases falling in bin
+    ampmean[iBin] = mean(amp[ind])         # compute mean amp
+    phsmean[iBin] = mean([phLow, phHi])    # save center phase 
+end
 
-## Step by step: 
-### Extract amp and phase from filtered signals - phase from low-frequency signal and amp envelope of high-freq signal. They use the analytic signal approach to estimate instantaneous phase and amplitude envelope of the LFP, using a hilbert transform (lengthy description of why in link above)
-    # phi = angle(signal.hilbert(Vlo))  # Compute phase of low-freq signal
-    # amp = abs(signal.hilbert(Vhi))       # Compute amplitude of high-freq signal
+### Determine if the Phase and Amp are related - of a variety of methods, they recommend the phase-amplitude plot:
+plot(phsmean',
+    ampmean',
+    linewidth = 4,
+    linecolor = :orange,
+    title  = "Cross Frequency Coupling",
+    xlabel = "Theta phase",
+    ylabel = "Low Gamma amplitude",
+    legend = false,
+    grid   = false,
+)
 
-### Determine if the Phase and Amp are related - of a variety of methods, they recommend the phase-amplitude plot
-    # p_bins = arange(-pi, pi, 0.1)
-    # a_mean = zeros(size(p_bins)-1)
-    # p_mean = zeros(size(p_bins)-1)
-    # for k in range(size(p_bins)-1):     #For each phase bin,
-    #     pL = p_bins[k]                  #... lower phase limit,
-    #     pR = p_bins[k+1]                #... upper phase limit.
-    #     indices=(phi>=pL) & (phi<pR)    #Find phases falling in bin,
-    #     a_mean[k] = mean(amp[indices])  #... compute mean amplitude,
-    #     p_mean[k] = mean([pL, pR])      #... save center phase.
-    # plot(p_mean, a_mean)                #Plot the phase versus amplitude,
-    # ylabel('High-frequency amplitude')  #... with axes labeled.
-    # xlabel('Low-frequency phase');
 ### - find the difference between the max and min of the average amp over phases
     # h = max(a_mean)-min(a_mean)
     # print(h)
+
 ### - assess h's significance by creating a surrogate phase-amp vector by resampling without replacement the amplitude time series (explanation as to why in link above)
     # n_surrogates = 1000;                    #Define no. of surrogates.
     # hS = zeros(n_surrogates)                #Vector to hold h results.
