@@ -4,35 +4,41 @@
 
 using MAT, Statistics
 using DSP, FFTW
+# python for the filtering:
+using PyCall
+signal = pyimport("scipy.signal")
 
+# set up directories
 home    = @__DIR__
 data    = joinpath(home,"Data")
 
+# loop through groups
+# KIT, KIC, KIV
+# loop through animals
 curAn   = "KIC02"
 anDat   = matread(joinpath(data,(curAn * "_Data.mat")));
+anCSD  = anDat["Data"]["SglTrl_CSD"]; # all single trial CSD data for full recording day
+anCon  = anDat["Data"]["Condition"];  # all conditions for full recording day
 
-# all single trial CSD data for full recording day:
-anCSD  = anDat["Data"]["SglTrl_CSD"];
-# all conditions for recording day with this animal:
-anCon  = anDat["Data"]["Condition"];
-
+# loop through relevant conditions
 # let's start with the preCLtono
 ConIdx = (LinearIndices(anCon))[findall(x -> x == "preCL_1", anCon)] #findall gives cartesian coordinates so we have to further translate to index position
-# pull out the CSD at that position
-curCSD = anCSD[ConIdx][1];
-# pull out the 5 hz signal for now as well as the FIRST single trial
-curCSD = curCSD[2][:,:,1]
+curCSD = anCSD[ConIdx][1]; # pull out the CSD at that position
+# loop through frequencies 
+# loop through trials
+curCSD = curCSD[2][:,:,1]  # pull out the 5hz signal for now in the FIRST single trial
 
-# to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle 3 channels of layer IV. Then we average them and that's our final signal to process
+# loop through layers (may flip order to layers then trials)
+# to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle 3 channels of layer IV. Then we average them and that's our final signal to process:
 layIV = mean(curCSD[6:8,:], dims =1)
-# extract time, sampling interval, and Nyquist frequency
-t   = [1:1:length(layIV)...] #theoretically to account for other sampling rates we can make (1000/sr) which would give us "1" and someone with a lower sampling rate a larger step size
-dt  = t[2] - t[1] #sampling rate is 1000
-fNQ = 1 / dt / 2
-N   = length(layIV) # number of data points 
-T   = length(layIV) # the total duration of data (T = N here)
 
 # ## let's visualize the SPECTRUM
+# t   = [1:Int(1000/sr):length(layIV)...] #time accounting for sr
+# dt  = t[2] - t[1]   # sampling interval
+# fNQ = 1 / dt / 2    # Nyquest is half sampling rate (fraction: 0.5)
+# N   = length(t)     # number of data points 
+# T   = length(layIV) # the total duration of data (T = N here)
+#
 # x  = hanning(N) .* layIV[:] # multiply data by hanning taper
 # xf = fft(x) # compute Fourier transform
 # Sxx = (2*dt)^(2/T) * (xf.*conj(xf)) # compute the spectrum
@@ -47,18 +53,19 @@ T   = length(layIV) # the total duration of data (T = N here)
 #     xlabel = "Frequency [Hz]", 
 # )
 
-# python is better at this filtering stuff
-using PyCall
-signal = pyimport("scipy.signal")
+# Filter Step!
+sr  = 1000          # sampling rate
+NQ  = Int(sr/2)     # Nyquest frequency
+
 # set a passband [4-7] Hz 
 Wn  = [4:7...] # theta band
-n   = 100
-b   = signal.firwin(n, Wn, nyq=500, pass_zero=false, window="hamming")
-Vlo = signal.filtfilt(b, 1, layIV)
+n   = 100      # filter order (determines accuracy)
+b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming") #PyCall
+Vlo = signal.filtfilt(b, 1, layIV) #PyCall
 
 # set a passband [31-60] Hz 
 Wn  = [31:60...] #low gamma band (in KIC02 I'm seeing a spike at 50 Hz)
-b   = signal.firwin(n, Wn, nyq=500, pass_zero=false, window="hamming")
+b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming")
 Vhi = signal.filtfilt(b, 1, layIV)
 
 ## visualize the filters
@@ -85,48 +92,6 @@ plot!(Vhi', label = "low gamma")
 
 
 ## Step by step: 
-### Compute Spectrum of LFP data - analyze entire length of data and compute the spectrum with a Hanning taper
-    # dt = t[1] - t[0]                # Define the sampling interval,
-    # T = t[-1]                       # ... the duration of the data,
-    # N = len(LFP)                    # ... and the no. of data points
-
-    # x = hanning(N) * LFP            # Multiply data by a Hanning taper
-    # xf = rfft(x - x.mean())         # Compute Fourier transform
-    # Sxx = 2*dt**2/T * (xf*conj(xf)) # Compute the spectrum
-    # Sxx = real(Sxx)                 # Ignore complex components
-
-    # df = 1 / T                      # Define frequency resolution,
-    # fNQ = 1 / dt / 2                # ... and Nyquist frequency. 
-
-    # faxis = arange(0, fNQ + df, df) # Construct freq. axis
-    # plot(faxis, 10 * log10(Sxx))    # Plot spectrum vs freq.
-    # xlim([0, 200])                  # Set freq. range, 
-    # ylim([-80, 0])                  # ... and decibel range
-    # xlabel('Frequency [Hz]')        # Label the axes
-    # ylabel('Power [mV$^2$/Hz]');
-
-### Filter Data into High and Low frequency bands - should be two frequency bands chosen because they are the two highest peaks in the spectrum. The following is with the Finite Impulse Response (FIR) filter
-    # from scipy import signal
-    # Wn = [5,7];                         # Set the passband [5-7] Hz,
-    # n = 100;                            # ... and filter order,
-    #                                     # ... build the bandpass filter,
-    # b = signal.firwin(n, Wn, nyq=fNQ, pass_zero=False, window='hamming');
-    # Vlo = signal.filtfilt(b, 1, LFP);   # ... and apply it to the data.
-
-    # Wn = [80, 120];                     # Set the passband [80-120] Hz,
-    # n = 100;                            # ... and filter order,
-    #                                     # ... build the bandpass filter,
-    # b = signal.firwin(n, Wn, nyq=fNQ, pass_zero=False, window='hamming');
-    # Vhi = signal.filtfilt(b, 1, LFP);   # ... and apply it to the data.
-    # figure(figsize=(14, 4))         # Create a figure with a specific size.
-    # plot(t, LFP)                    # Plot the original data vs time.
-    # plot(t, Vlo)                    # Plot the low-frequency filtered data vs time.
-    # plot(t, Vhi)                    # Plot the high-frequency filtered data vs time.
-    # xlabel('Time [s]')
-    # xlim([24, 26]);                 # Choose a 2 s interval to examine
-    # ylim([-2, 2]);
-    # legend(['LFP', 'Vlo', 'Vhi']);  # Add a legend.
-
 ### Extract amp and phase from filtered signals - phase from low-frequency signal and amp envelope of high-freq signal. They use the analytic signal approach to estimate instantaneous phase and amplitude envelope of the LFP, using a hilbert transform (lengthy description of why in link above)
     # phi = angle(signal.hilbert(Vlo))  # Compute phase of low-freq signal
     # amp = abs(signal.hilbert(Vhi))       # Compute amplitude of high-freq signal
