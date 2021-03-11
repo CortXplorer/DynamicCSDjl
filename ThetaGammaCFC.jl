@@ -11,6 +11,8 @@ signal = pyimport("scipy.signal")
 # set up directories
 home    = @__DIR__
 data    = joinpath(home,"Data")
+func    = joinpath(home,"functions")
+include(joinpath(func,"CFCfunc.jl"))
 
 # loop through groups
 # KIT, KIC, KIV
@@ -20,42 +22,25 @@ anDat   = matread(joinpath(data,(curAn * "_Data.mat")));
 anCSD  = anDat["Data"]["SglTrl_CSD"]; # all single trial CSD data for full recording day
 anCon  = anDat["Data"]["Condition"];  # all conditions for full recording day
 
+
 # loop through relevant conditions
 # let's start with the preCL
 ConIdx = (LinearIndices(anCon))[findall(x -> x == "preCL_1", anCon)] #findall gives cartesian coordinates so we have to further translate to index position
 curCSD = anCSD[ConIdx][1]; # pull out the CSD at that position
 # loop through frequencies 
 # loop through trials
-curCSD = curCSD[2][:,:,1]  # pull out the 5hz signal for now in the FIRST single trial
+thistrial = 6
+curCSDst = curCSD[2][:,:,thistrial]  # pull out the 5hz signal for now in the FIRST single trial
 
 # loop through layers (may flip order to layers then trials)
 # to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle channels of layer IV. That's our final signal to process:
-layIV = curCSD[7,:]
-
-# ## let's visualize the SPECTRUM
-# t   = [1:Int(1000/sr):length(layIV)...] #time accounting for sr
-# dt  = t[2] - t[1]   # sampling interval
-# fNQ = 1 / dt / 2    # Nyquest is half sampling rate (fraction: 0.5)
-# N   = length(t)     # number of data points 
-# T   = length(layIV) # the total duration of data (T = N here)
-#
-# x  = hanning(N) .* layIV[:] # multiply data by hanning taper
-# xf = fft(x) # compute Fourier transform
-# Sxx = (2*dt)^(2/T) * (xf.*conj(xf)) # compute the spectrum
-# Sxx = real(Sxx) # ignore complex components
-# df = 1/T # define frequency resolution 
-# faxis = [0:df:fNQ+df...] # construct freq axis 
-# plot(
-#     faxis[1:139], 
-#     10 * log10.(Sxx[1:139]),
-#     title  = "Spectrum of CSD FFT",
-#     ylabel = "Power [mV^2/Hz]",
-#     xlabel = "Frequency [Hz]", 
-# )
+layIV = curCSDst[7,:]
 
 # Filter Step!
 sr  = 1000          # sampling rate
 NQ  = Int(sr/2)     # Nyquest frequency
+
+# specplot = visSpectrum(layIV, sr) # to visualize the SPECTRUM
 
 # set a passband [4-7] Hz 
 Wn  = [4:7...] # theta band
@@ -66,45 +51,61 @@ Vlo = signal.filtfilt(b, 1, layIV) #PyCall
 # set a passband [31-60] Hz 
 Wn  = [31:60...] #low gamma band (in KIC02 preCL_1 I'm seeing a spike at 50 Hz, I will have to find a way to verify that this is the target of interest accross measurements/animals)
 b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming")
-Vhi = signal.filtfilt(b, 1, layIV)
+Vlg = signal.filtfilt(b, 1, layIV)
+
+Wn  = [61:100...] #low gamma band (in KIC02 preCL_1 I'm seeing a spike at 50 Hz, I will have to find a way to verify that this is the target of interest accross measurements/animals)
+b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming")
+Vhg = signal.filtfilt(b, 1, layIV)
 
 ## visualize the filters
-plot(layIV, label = "signal")
-plot!(Vlo, label = "theta")
-plot!(Vhi, label = "low gamma")
+plot(
+    [layIV Vlo Vlg Vhg], 
+    label = ["Signal" "Theta" "Low Gamma" "High Gamma"],
+    ylabel = "Amplitude [mV/mm²]",
+    xlabel = "Time [ms]",
+    title = "Spectrum",
+)
 
-phi = angle.(signal.hilbert(Vlo)) # Compute phase of low-freq signal
-amp = abs.(signal.hilbert(Vhi))   # Compute amplitude of high-freq signal
+phith = angle.(signal.hilbert(Vlo)) # Compute phase of low-freq signal
+amplg = abs.(signal.hilbert(Vlg))   # Compute amplitude of high-freq signal
+amphg = abs.(signal.hilbert(Vhg))   # Compute amplitude of high-freq signal
 
 phasebins = [-pi:0.1:pi...] # To compute CFC, define phase bins,
-ampmean   = zeros(1,length(phasebins)-1) # preallocate 
-phsmean   = zeros(1,length(phasebins)-1) # preallocate
+amplgmean   = zeros(1,length(phasebins)-1) # preallocate 
+amphgmean   = zeros(1,length(phasebins)-1) # preallocate 
+phithmean   = zeros(1,length(phasebins)-1) # preallocate
 
 for iBin = 1:length(phasebins)-1
-    phLow = p_bins[iBin]   # lower limit
-    phHi  = p_bins[iBin+1] # upper limit
-    ind   = findall(phLow .<= phi .< phHi) # find phases falling in bin
-    ampmean[iBin] = mean(amp[ind])         # compute mean amp
-    phsmean[iBin] = mean([phLow, phHi])    # save center phase 
+    phLow = phasebins[iBin]   # lower limit
+    phHi  = phasebins[iBin+1] # upper limit
+    ind   = findall(phLow .<= phith .< phHi) # find phases falling in bin
+    amplgmean[iBin] = mean(amplg[ind])         # compute mean amp
+    amphgmean[iBin] = mean(amphg[ind])         # compute mean amp
+    phithmean[iBin] = mean([phLow, phHi])    # save center phase 
 end
 
 ### Determine if the Phase and Amp are related - of a variety of methods, they recommend the phase-amplitude plot:
-plot(phsmean',
-    ampmean',
+plot([phithmean' phithmean'],
+    [amplgmean' amphgmean'],
     linewidth = 4,
-    linecolor = :orange,
+    linecolor = [:orange :red],
     title  = "Cross Frequency Coupling",
     xlabel = "Theta phase",
-    ylabel = "Low Gamma amplitude",
-    legend = false,
+    ylabel = "Gamma amplitude",
+    label = ["low gamma vs theta" "high gamma vs theta"],
     grid   = false,
 )
 
-### - find the difference between the max and min of the average amp over phases
-    # h = max(a_mean)-min(a_mean)
-    # print(h)
+hlg = maximum(amplgmean) - minimum(amplgmean) # diff between min and max
+hhg = maximum(amphgmean) - minimum(amphgmean)
 
-### - assess h's significance by creating a surrogate phase-amp vector by resampling without replacement the amplitude time series (explanation as to why in link above)
+
+### Assess h's significance by creating a surrogate phase-amp vector by resampling without replacement the amplitude time series (explanation as to why in link above)
+
+nsurrogate = 1000 # number of test surrogates 
+hSlg  = zeros(nsurrogate)
+for iSur = 1:nsurrogate 
+
     # n_surrogates = 1000;                    #Define no. of surrogates.
     # hS = zeros(n_surrogates)                #Vector to hold h results.
     # for ns in range(n_surrogates):          #For each surrogate,
