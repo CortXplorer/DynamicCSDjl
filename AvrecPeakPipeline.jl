@@ -1,21 +1,32 @@
+### This pipeline takes extracted features from avrec and layer trace data in the form of csv (output from matlab) and produces graphs and plots for all t tests and cohen's d tests as well as a few extra plots to explore the data
+
+## input:   home/Data/AVRECPeak**.csv
+## output:  home/figs/AM_TemporalFlow, .../Avrec1Peak, .../AvrecPeakPlots_againstLayer, .../AvrecPeakPlots_againstMeasurement, .../AvrecPeakRatio, .../AvrecScatter, .../CohensDPlots -&- home/Data/AvrecPeakStats
+
+# # do for all packages: # #
+# type ']' to enter pkg> 
+# then in pkg> type 'add Plots' 
+# then you can backspace to return to julia> and use 'using Plots'
 using Plots, OhMyREPL
 using CSV, DataFrames
 using StatsPlots
 using HypothesisTests, EffectSizes
-using Infiltrator
+# using Infiltrator # only used when adding breakpoints
 
+# # make sure Julia is in the directory you would like to use: # #
+# type '@__DIR__' to print out the directory julia is currently pointing to
 home    = @__DIR__
 func    = joinpath(home,"functions")
 figs    = joinpath(home,"figs")
 data    = joinpath(home,"Data")
-include(joinpath(func,"AvrecPeakPlots.jl"))
-include(joinpath(func,"AvrecPeakStats.jl"))
+include(joinpath(func,"AvrecPeakPlots.jl")) # contains all plotting functions 
+include(joinpath(func,"AvrecPeakStats.jl")) # contains all stats functions
 
-savetype = ".pdf" # choose how all figures are saved, default ".pdf"
-stimtype = ["CL" "AM"]
-freqtype = ["2Hz" "5Hz" "10Hz" "20Hz" "40Hz"]
+savetype = ".png" # choose how all figures are saved, default ".pdf"
+stimtype = ["CL" "AM"] # CL = click train and AM = amplitude modulation
+freqtype = ["2Hz" "5Hz" "10Hz" "20Hz" "40Hz"] # frequency of train or modulation
 
-# This loop runs through stim type click and am, and frequency 2 - 40 Hz. It analyzes groups KIT, KIC, and KIV but can generally handle changes in group size if animals are added. Data in is taken from Matlab in the form of .csv's 
+# This loop runs through stim type (click and AM), and frequency (2 - 40 Hz). It analyzes groups KIT, KIC, and KIV and can handle changes in group size if animals are added. Analysis is run for trial average and single-trial (ST) data
 for iTyp = 1:length(stimtype)
     # Load in data from matlab table csv file which contains 2 and 5 hz peak amp and latency. 
     if stimtype[iTyp] == "CL"
@@ -65,7 +76,7 @@ for iTyp = 1:length(stimtype)
             end
 
             ## Peak Amp/Lat/RMS response difference
-            peaks = ["1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" "10th"]
+            peaks = ["1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" "10th"] # limited to first 10 now, no reason to go beyond to 20 and 40 yet
             for ipeak = 1:length(peaks)
 
                 if ipeak <= StimHz.ClickFreq[1] # cut this to amount of detection windows
@@ -105,6 +116,6 @@ for iTyp = 1:length(stimtype)
     end
 end
 
-include(joinpath(func,"CohensProg.jl"))
+include(joinpath(func,"CohensProg.jl")) # contains cohen's d plotting function (stats output already has cohen's d results per row)
 
 CohensProg(figs, data, freqtype, stimtype, savetype)
