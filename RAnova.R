@@ -1,5 +1,10 @@
-## Set working directory and create necessary file paths
-setwd("D:/DynamicCSDjl")
+### RAnova takes extracted features from avrec and layer trace data in the form of csv (output from matlab) and produces Anova output in txt format
+
+## input:   home/Data/AVRECPeak**.csv
+## output:  home/Data/AvrecPeakStats/ANOVASummary.txt
+
+# # Set working directory and create necessary file paths: # #
+setwd("D:/DynamicCSDjl") ## Change to your! (don't know how to do this dynamically in R)
 home = getwd()
 datapath = file.path(home,"Data")
 
@@ -7,7 +12,7 @@ sink(file=file.path(datapath,"AvrecPeakStats","ANOVASummary.txt"), type=c("outpu
 TAorST   = list("TA", "ST")
 stimtype = list("CL", "AM")
 layer    = list("All", "I_II", "IV", "V", "VI")
-comptype = list("KIT vs KIC", "KIT vs KIV", "KIC vs KIV") #,"KIT vs KIV", "KIC vs KIV"
+comptype = list("KIT vs KIC", "KIT vs KIV", "KIC vs KIV")
 
 for (iRun in 1:length(TAorST)) {
   
@@ -69,7 +74,7 @@ for (iRun in 1:length(TAorST)) {
             print(paste0("========= ROOT MEAN SQUARE ", comptype[iCmp], " =========")) 
             res.aov3 = aov(RMS ~ Group * Measurement, data = subDat)
             print(summary(res.aov3))
-          
+          @info "lel"
           } # which comparison
         } # order of click
       } # which stim frequency

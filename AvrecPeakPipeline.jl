@@ -119,3 +119,5 @@ end
 include(joinpath(func,"CohensProg.jl")) # contains cohen's d plotting function (stats output already has cohen's d results per row)
 
 CohensProg(figs, data, freqtype, stimtype, savetype)
+
+# Run RAnova.R  
