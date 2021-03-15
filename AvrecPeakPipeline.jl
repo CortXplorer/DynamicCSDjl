@@ -1,7 +1,7 @@
 ### This pipeline takes extracted features from avrec and layer trace data in the form of csv (output from matlab) and produces graphs and plots for all t tests and cohen's d tests as well as a few extra plots to explore the data
 
 ## input:   home/Data/AVRECPeak**.csv
-## output:  home/figs/AM_TemporalFlow, .../Avrec1Peak, .../AvrecPeakPlots_againstLayer, .../AvrecPeakPlots_againstMeasurement, .../AvrecPeakRatio, .../AvrecScatter, .../CohensDPlots -&- home/Data/AvrecPeakStats
+## output:  home/figs/Avrec1Peak, .../AvrecPeakPlots_againstLayer, .../AvrecPeakPlots_againstMeasurement, .../AvrecPeakRatio, .../AvrecScatter, .../CohensDPlots -&- home/Data/AvrecPeakStats
 
 # # do for all packages: # #
 # type ']' to enter pkg> 
@@ -120,4 +120,4 @@ include(joinpath(func,"CohensProg.jl")) # contains cohen's d plotting function (
 
 CohensProg(figs, data, freqtype, stimtype, savetype)
 
-# Run RAnova.R  
+# Run RAnova.R before or after this
