@@ -8,3 +8,6 @@
 *.csv
 *.txt
 *.jld2
+*.zip
+
+ShortenData.jl
