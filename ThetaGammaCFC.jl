@@ -25,13 +25,15 @@ stimfrq  = ["2Hz" "5Hz" "10Hz" "20Hz" "40Hz"]
 layers   = ["II" "IV" "V" "VI"]
 sr       = 1000          # sampling rate
 NQ       = Int(sr/2)     # Nyquest frequency
-cfcTable = DataFrame # initialize DataFrame table
+
+# initialize DataFrame table
+cfcTab = DataFrame(Group = String[], Animal = String[], Condition = String[], StimFrq = String[], Layer = String[], h_lowgam = Float64[], Smean_lowgam = Float64[], Sstd_lowgam = Float64[], p_lowgam = Float64[], ObsDist_lowgam = Float64[], h_higam = Float64[], Smean_higam = Float64[], Sstd_higam = Float64[], p_higam = Float64[], ObsDist_higam = Float64[])
 
 takepic = 1 # only use this for specific case checking
 
 iGr = 1 # For iGr = 1:length(Groups) # loop through groups
 
-    animalList,_,LIIList,LIVList,LVList,LVIList,_ = callGroup(Groups[iGr]) # extract animal data of group
+    animalList,_,LIIList,LIVList,LVList,LVIList,_ = callGroup(Groups[iGr]); # extract animal data of group
 
     iAn = 1 # For iAn = 1:length(animalList) # loop through animals
 
@@ -108,10 +110,7 @@ iGr = 1 # For iGr = 1:length(Groups) # loop through groups
                         surmean_hg, surstd_hg = mean(hShg), std(hShg)
                         distObs_hg = hhg - surmean_hg / surstd_hg
 
-
-                        df = DataFrame(Group = curAn[1:3], Animal = curAn, Condition = condList[iCn], StimFrq = stimfrq[iFr], Layer = layers[iLa], h_lowgamma = hlg, surrmean_lowgamma = surmean_lg, surrstd_lowgamma = surstd_lg, p_lowgamma = pval_lg, ObservedDist_lowgamma = distObs_lg, h_higamma = hhg, surrmean_higamma = surmean_hg, surrstd_higamma = surstd_hg, p_higamma = pval_hg, ObservedDist_higamma = distObs_hg)
-
-                        cfcTable = [cfcTable,df]
+                        push!(cfcTab, [curAn[1:3] curAn condList[iCn] stimfrq[iFr] layers[iLa] hlg surmean_lg surstd_lg pval_lg distObs_lg hhg surmean_hg surstd_hg pval_hg distObs_hg])
 
                         # averaging the std distance from the surrogate mean between trials and then animals will give a magnitude of significant difference from random and may provide more nuanced insights into differences between groups 
 #                     end
@@ -120,3 +119,5 @@ iGr = 1 # For iGr = 1:length(Groups) # loop through groups
 #         end
 #     end
 # end
+
+CSV.write(joinpath(data,"Spectral\\CFCtable.csv"), cfcTab) # write out dataframe to CSV
