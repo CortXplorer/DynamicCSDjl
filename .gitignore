@@ -9,5 +9,6 @@
 *.txt
 *.jld2
 *.zip
+*.png
 
 ShortenData.jl
