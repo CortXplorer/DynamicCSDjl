@@ -1,9 +1,12 @@
 # Theta Gamma Cross Frequency Coupling (CFC)
 
-# https://mark-kramer.github.io/Case-Studies-Python/07.html
+# Note: there are spots in the code specifically for extracting figures of the individual steps. These are currently silenced for the full loops but are a good sanity/understanding check 
+
+# Code ported from: https://mark-kramer.github.io/Case-Studies-Python/07.html
 
 using MAT, Statistics, Random
 using DSP, FFTW
+using DataFrames, CSV
 # python for the filtering:
 using PyCall
 signal = pyimport("scipy.signal")
@@ -12,151 +15,108 @@ signal = pyimport("scipy.signal")
 home    = @__DIR__
 data    = joinpath(home,"Data")
 func    = joinpath(home,"functions")
-include(joinpath(func,"CFCfunc.jl"))
+group   = joinpath(home,"groups")
+include(joinpath(func,"CFCfunc.jl")) # contains supporting functions for CFC
+include(joinpath(group,"callGroup.jl")) # contains animal data
 
-# loop through groups
-# KIT, KIC, KIV
-# loop through animals
-curAn   = "KIC02"
-anDat   = matread(joinpath(data,(curAn * "_Data.mat")));
-anCSD  = anDat["Data"]["SglTrl_CSD"]; # all single trial CSD data for full recording day
-anCon  = anDat["Data"]["Condition"];  # all conditions for full recording day
+Groups   = ["KIC" "KIT" "KIV"]
+condList = ["preCL_1","CL_1","preAM_1","AM_1"]
+stimfrq  = ["2Hz" "5Hz" "10Hz" "20Hz" "40Hz"]
+layers   = ["II" "IV" "V" "VI"]
+sr       = 1000          # sampling rate
+NQ       = Int(sr/2)     # Nyquest frequency
+cfcTable = DataFrame # initialize DataFrame table
 
+takepic = 1 # only use this for specific case checking
 
-# loop through relevant conditions
-# let's start with the preCL
-ConIdx = (LinearIndices(anCon))[findall(x -> x == "preCL_1", anCon)] #findall gives cartesian coordinates so we have to further translate to index position
-curCSD = anCSD[ConIdx][1]; # pull out the CSD at that position
-# loop through frequencies 
-# loop through trials
-thistrial = 1
-curCSDst = curCSD[2][:,:,thistrial]  # pull out the 5hz signal for now in the FIRST single trial
+iGr = 1 # For iGr = 1:length(Groups) # loop through groups
 
-# loop through layers (may flip order to layers then trials)
-# to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle channels of layer IV. That's our final signal to process:
-layIV = curCSDst[7,:]
+    animalList,_,LIIList,LIVList,LVList,LVIList,_ = callGroup(Groups[iGr]) # extract animal data of group
 
-# Filter Step!
-sr  = 1000          # sampling rate
-NQ  = Int(sr/2)     # Nyquest frequency
+    iAn = 1 # For iAn = 1:length(animalList) # loop through animals
 
-# specplot = visSpectrum(layIV, sr) # to visualize the SPECTRUM
+        curAn   = animalList[iAn]
+        anDat   = matread(joinpath(data,(curAn * "_Data.mat")));
+        anCSD  = anDat["Data"]["SglTrl_CSD"]; # all single trial CSD data 
+        anCon  = anDat["Data"]["Condition"];  # all conditions for full recording day
 
-# set a passband [4-7] Hz 
-Wn  = [4:7...] # theta band
-n   = 100      # filter order (determines accuracy)
-b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming") #PyCall
-Vlo = signal.filtfilt(b, 1, layIV) #PyCall
+        iCn = 1 # For iCn = 1:length(condList) # loop through relevant conditions
 
-# set a passband [31-60] Hz 
-Wn  = [31:60...] #low gamma band (in KIC02 preCL_1 I'm seeing a spike at 50 Hz, I will have to find a way to verify that this is the target of interest accross measurements/animals)
-b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming")
-Vlg = signal.filtfilt(b, 1, layIV)
+            ConIdx = findall(x -> x == condList[iCn], anCon) 
+            curCSD = anCSD[ConIdx][1]; # pull out the CSD at that condition
 
-Wn  = [61:100...] #low gamma band (in KIC02 preCL_1 I'm seeing a spike at 50 Hz, I will have to find a way to verify that this is the target of interest accross measurements/animals)
-b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming")
-Vhg = signal.filtfilt(b, 1, layIV)
+            iFr = 1 # For iFr = 1:length(stimfrq) # loop through frequencies 
+            
+                iTr = 1 # For iTr = 1:size(curCSD[iFr],3) # loop through trials
+                    
+                    curCSDst = curCSD[iFr][:,:,iTr]  # pull out the signal
 
-## visualize the filters
-plot(
-    [layIV Vlo Vlg Vhg], 
-    label = ["Signal" "Theta" "Low Gamma" "High Gamma"],
-    ylabel = "Amplitude [mV/mm²]",
-    xlabel = "Time [ms]",
-    title = "Filters",
-)
+                    iLa = 1 # for iLa = 1:length(layers) # loop through layers 
+                    # to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle channels of layer IV. That's our final signal to process:
 
-phith = angle.(signal.hilbert(Vlo)) # Compute phase of low-freq signal
-amplg = abs.(signal.hilbert(Vlg))   # Compute amplitude of high-freq signal
-amphg = abs.(signal.hilbert(Vhg))   # Compute amplitude of high-freq signal
+                        if iLa == 1 # we can write this to check correct layers later
+                            curChan = LIIList[iAn]
+                        elseif iLa == 2
+                            curChan = LIVList[iAn]
+                        elseif iLa == 3
+                            curChan = LVList[iAn]
+                        elseif iLa == 4
+                            curChan = LVIList[iAn]
+                        end
 
-phasebins = [-pi:0.1:pi...] # To compute CFC, define phase bins,
-amplgmean   = zeros(1,length(phasebins)-1) # preallocate 
-amphgmean   = zeros(1,length(phasebins)-1) # preallocate 
-phithmean   = zeros(1,length(phasebins)-1) # preallocate
+                        centerChan = Int(ceil(mean(curChan))) # take only the central layer channel
 
-for iBin = 1:length(phasebins)-1
-    phLow = phasebins[iBin]   # lower limit
-    phHi  = phasebins[iBin+1] # upper limit
-    ind   = findall(phLow .<= phith .< phHi)   # find phases falling in bin
-    amplgmean[iBin] = mean(amplg[ind])         # compute mean amp
-    amphgmean[iBin] = mean(amphg[ind])         # compute mean amp
-    phithmean[iBin] = mean([phLow, phHi])      # save center phase 
-end
+                        layCSDst = curCSDst[centerChan,:] # now we have our final raw signal to start with!
 
-### Determine if the Phase and Amp are related - of a variety of methods, they recommend the phase-amplitude plot:
-plot([phithmean' phithmean'],
-    [amplgmean' amphgmean'],
-    linewidth = 4,
-    linecolor = [:orange :red],
-    title  = "Cross Frequency Coupling",
-    xlabel = "Theta phase",
-    ylabel = "Gamma amplitude",
-    label = ["low gamma vs theta" "high gamma vs theta"],
-    grid   = false,
-)
+                        # Filter Step!
+                        Vlo, Vlg, Vhg = thetagamma_filter(layCSDst, sr, NQ, signal, takepic)
 
-hlg = maximum(amplgmean) - minimum(amplgmean) # diff between min and max
-hhg = maximum(amphgmean) - minimum(amphgmean)
+                        phith = angle.(signal.hilbert(Vlo)) # Compute phase of theta
+                        amplg = abs.(signal.hilbert(Vlg))   # Compute amp of low gamma
+                        amphg = abs.(signal.hilbert(Vhg))   # Compute amp of high gamma
 
+                        hlg, hhg = CFCget_h(phith,amplg,amphg,1) # h gives the max amp - min amp after creating the curve to couple theta phase to gamma amp
 
-### Assess h's significance by creating a surrogate phase-amp vector by resampling without replacement the amplitude time series (explanation as to why in link above)
+                        ### Assess h's significance by creating a surrogate phase-amp vector by resampling without replacement the amplitude time series (explanation as to why in link above)
 
-nsurrogate = 1000 # number of test surrogates 
-hSlg  = zeros(nsurrogate) # very like a parametric bootstrap
-hShg  = zeros(nsurrogate) # also very like permuation testing
+                        nsurrogate = 1000 # number of test surrogates 
+                        hSlg  = zeros(nsurrogate) # very like a parametric bootstrap
+                        hShg  = zeros(nsurrogate) # also very like permuation testing
 
-for iSur = 1:nsurrogate 
+                        for iSur = 1:nsurrogate 
 
-    amplgS = shuffle(amplg) # shuffle or resample
-    amphgS = shuffle(amphg)
+                            amplgS = shuffle(amplg) # shuffle or resample
+                            amphgS = shuffle(amphg)
 
-    phasebins = [-pi:0.1:pi...] # To compute CFC, define phase bins,
-    amplgmean   = zeros(1,length(phasebins)-1) # preallocate 
-    amphgmean   = zeros(1,length(phasebins)-1) # preallocate 
+                            hSlg[iSur], hShg[iSur] = CFCget_h(phith,amplgS,amphgS,0)
+                            
+                        end
 
-    for iBin = 1:length(phasebins)-1
-        phLow = phasebins[iBin]   # lower limit
-        phHi  = phasebins[iBin+1] # upper limit
-        ind   = findall(phLow .<= phith .< phHi)   # find phases falling in bin
-        amplgmean[iBin] = mean(amplgS[ind])        # compute mean amp
-        amphgmean[iBin] = mean(amphgS[ind])        # compute mean amp
-    end
+                        if takepic == 1
+                            distplot = visSurrdist(hSlg, hShg, hlg, hhg)
+                            savefig("distSurr_vsObs.png")
+                        end
 
-    hSlg[iSur] = maximum(amplgmean) - minimum(amplgmean) # diff between min and max
-    hShg[iSur] = maximum(amphgmean) - minimum(amphgmean)
-    
-end
+                        ### - To compute a p-value, we determine the proportion of surrogate h values greater than the observed h value
 
-histogram(
-    [hSlg hShg],
-    label = ["Low gamma surrogate distribution" "High gamma surrogate distribution"],    
-    fillcolor = [:red4 :blue4],
-    title     = "Observed vs Surrogate Distribution",
-    ylabel    = "Count",
-    xlabel    = "Amplitude [mV/mm²]"
-) # the results of the surrogate tests in a distribution
+                        pval_lg = length(findall(hSlg .> hlg)) / length(hSlg) # p value
+                        pval_hg = length(findall(hShg .> hhg)) / length(hShg)
 
-vline!(
-    [hlg hhg],
-    label     = ["Low gamma observed" "High gamma observed"], 
-    linecolor = [:indianred :royalblue2],
-    linewidth = 6
-) # with the observed values overlaid
+                        surmean_lg, surstd_lg = mean(hSlg), std(hSlg) # mean/std of sur dist
+                        distObs_lg = hlg - surmean_lg / surstd_lg     # std away from mean 
+
+                        surmean_hg, surstd_hg = mean(hShg), std(hShg)
+                        distObs_hg = hhg - surmean_hg / surstd_hg
 
 
+                        df = DataFrame(Group = curAn[1:3], Animal = curAn, Condition = condList[iCn], StimFrq = stimfrq[iFr], Layer = layers[iLa], h_lowgamma = hlg, surrmean_lowgamma = surmean_lg, surrstd_lowgamma = surstd_lg, p_lowgamma = pval_lg, ObservedDist_lowgamma = distObs_lg, h_higamma = hhg, surrmean_higamma = surmean_hg, surrstd_higamma = surstd_hg, p_higamma = pval_hg, ObservedDist_higamma = distObs_hg)
 
-### - To compute a p-value, we determine the proportion of surrogate h values greater than the observed h value
+                        cfcTable = [cfcTable,df]
 
-pval_lg = length(findall(hSlg .> hlg)) / length(hSlg) # p value
-pval_hg = length(findall(hShg .> hhg)) / length(hShg)
-
-surmean_lg, surstd_lg = mean(hSlg), std(hSlg) # mean/std of sur dist
-obsdist_lg = hlg - surmean_lg / surstd_lg     # std away from mean 
-
-surmean_hg, surstd_hg = mean(hShg), std(hShg)
-distObs_hg = hhg - surmean_hg / surstd_hg
-
-# need a table with the following: Group Animal Condition Frequency Layer hlg surmean_lg surstd_lg pval_lg obsdist_lg hhg surmean_hg surstd_hg pval_hg obsdist_hg
-
-# then I have a few features to play with but the important thing will be averaging the std distance from the surrogate mean between trials and then animals. This will give a magnitude of significant difference from random and may provide more nuanced insights into differences between groups 
+                        # averaging the std distance from the surrogate mean between trials and then animals will give a magnitude of significant difference from random and may provide more nuanced insights into differences between groups 
+#                     end
+#                 end
+#             end
+#         end
+#     end
+# end
