@@ -29,31 +29,31 @@ NQ       = Int(sr/2)     # Nyquest frequency
 # initialize DataFrame table
 cfcTab = DataFrame(Group = String[], Animal = String[], Condition = String[], StimFrq = String[], Layer = String[], h_lowgam = Float64[], Smean_lowgam = Float64[], Sstd_lowgam = Float64[], p_lowgam = Float64[], ObsDist_lowgam = Float64[], h_higam = Float64[], Smean_higam = Float64[], Sstd_higam = Float64[], p_higam = Float64[], ObsDist_higam = Float64[])
 
-takepic = 1 # only use this for specific case checking
+takepic = 0 # only use this for specific case checking
 
-iGr = 1 # For iGr = 1:length(Groups) # loop through groups
+for iGr = 1:length(Groups) # loop through groups
 
     animalList,_,LIIList,LIVList,LVList,LVIList,_ = callGroup(Groups[iGr]); # extract animal data of group
 
-    iAn = 1 # For iAn = 1:length(animalList) # loop through animals
+    for iAn = 1:length(animalList) # loop through animals
 
         curAn   = animalList[iAn]
         anDat   = matread(joinpath(data,(curAn * "_Data.mat")));
         anCSD  = anDat["Data"]["SglTrl_CSD"]; # all single trial CSD data 
         anCon  = anDat["Data"]["Condition"];  # all conditions for full recording day
 
-        iCn = 1 # For iCn = 1:length(condList) # loop through relevant conditions
+        for iCn = 1:length(condList) # loop through relevant conditions
 
             ConIdx = findall(x -> x == condList[iCn], anCon) 
             curCSD = anCSD[ConIdx][1]; # pull out the CSD at that condition
 
-            iFr = 1 # For iFr = 1:length(stimfrq) # loop through frequencies 
+            for iFr = 1:length(stimfrq) # loop through frequencies 
             
-                iTr = 1 # For iTr = 1:size(curCSD[iFr],3) # loop through trials
+                for iTr = 1:size(curCSD[iFr],3) # loop through trials
                     
                     curCSDst = curCSD[iFr][:,:,iTr]  # pull out the signal
 
-                    iLa = 1 # for iLa = 1:length(layers) # loop through layers 
+                    for iLa = 1:length(layers) # loop through layers 
                     # to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle channels of layer IV. That's our final signal to process:
 
                         if iLa == 1 # we can write this to check correct layers later
@@ -112,12 +112,12 @@ iGr = 1 # For iGr = 1:length(Groups) # loop through groups
 
                         push!(cfcTab, [curAn[1:3] curAn condList[iCn] stimfrq[iFr] layers[iLa] hlg surmean_lg surstd_lg pval_lg distObs_lg hhg surmean_hg surstd_hg pval_hg distObs_hg])
 
-                        # averaging the std distance from the surrogate mean between trials and then animals will give a magnitude of significant difference from random and may provide more nuanced insights into differences between groups 
-#                     end
-#                 end
-#             end
-#         end
-#     end
-# end
+                        # averaging the std distance of observed from the surrogate mean between trials and then animals will give a magnitude of significant difference from random and may provide more nuanced insights into differences between groups 
+                    end # layers
+                end # trials
+            end # frequency
+        end # conditions
+    end # animals
+end # groups
 
 CSV.write(joinpath(data,"Spectral\\CFCtable.csv"), cfcTab) # write out dataframe to CSV
