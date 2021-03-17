@@ -1,6 +1,6 @@
 function getCFCcsv(home,data,Groups,condList,stimfrq,layers,sr,NQ)
     # this function calculates CFC at a single trial level and produces the CFCtable.csv with which further testing can be done. Current run-time is 8+ hours so ONLY run if a new table is needed.
-    # input:    callGroup.jl animal data and *_Data.mat files from matlab DynamicCSD script
+    # input:    callGroup.jl animal data and *_Data.mat files from matlab DynamicLFP script
     # output:   home\Data\Spectral\CFCtable.csv 
     #           optional figures (takepic = 1) provides spectrum, filters, phase-amplitude  CFC chart, and surrogate distribution with observed values overlaid  
     
@@ -18,19 +18,19 @@ function getCFCcsv(home,data,Groups,condList,stimfrq,layers,sr,NQ)
             println(animalList[iAn])
             curAn   = animalList[iAn]
             anDat   = matread(joinpath(data,(curAn * "_Data.mat")));
-            anCSD  = anDat["Data"]["SglTrl_CSD"]; # all single trial CSD data 
+            anLFP  = anDat["Data"]["SglTrl_LFP"]; # all single trial LFP data 
             anCon  = anDat["Data"]["Condition"];  # all conditions for full recording day
 
             for iCn = 1:length(condList) # loop through relevant conditions
 
                 ConIdx = findall(x -> x == condList[iCn], anCon) 
-                curCSD = anCSD[ConIdx][1]; # pull out the CSD at that condition
+                curLFP = anLFP[ConIdx][1]; # pull out the LFP at that condition
 
                 for iFr = 1:length(stimfrq) # loop through frequencies 
                 
-                    for iTr = 1:size(curCSD[iFr],3) # loop through trials
+                    for iTr = 1:size(curLFP[iFr],3) # loop through trials
                         
-                        curCSDst = curCSD[iFr][:,:,iTr]  # pull out the signal
+                        curLFPst = curLFP[iFr][:,:,iTr]  # pull out the signal
 
                         for iLa = 1:length(layers) # loop through layers 
                         # to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle channels of layer IV. That's our final signal to process:
@@ -47,10 +47,10 @@ function getCFCcsv(home,data,Groups,condList,stimfrq,layers,sr,NQ)
 
                             centerChan = Int(ceil(mean(curChan))) # take only the central layer channel
 
-                            layCSDst = curCSDst[centerChan,:] # now we have our final raw signal to start with!
+                            layLFPst = curLFPst[centerChan,:] # now we have our final raw signal to start with!
 
                             # Filter Step!
-                            Vlo, Vlg, Vhg = thetagamma_filter(layCSDst, sr, NQ, signal, takepic)
+                            Vlo, Vlg, Vhg = thetagamma_filter(layLFPst, sr, NQ, signal, takepic)
 
                             phith = angle.(signal.hilbert(Vlo)) # Compute phase of theta
                             amplg = abs.(signal.hilbert(Vlg))   # Compute amp of low gamma
