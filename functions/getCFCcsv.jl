@@ -30,7 +30,7 @@ function getCFCcsv(home,data,Groups,condList,stimfrq,layers,sr,NQ)
                 
                     for iTr = 1:size(curLFP[iFr],3) # loop through trials
                         
-                        curLFPst = curLFP[iFr][:,:,iTr]  # pull out the signal
+                        curLFPst = curLFP[iFr][:,:,iTr]'  # pull out the signal
 
                         for iLa = 1:length(layers) # loop through layers 
                         # to run through layers, check CWT_Loop from CWTfunc.jl, for now we select manually the middle channels of layer IV. That's our final signal to process:
