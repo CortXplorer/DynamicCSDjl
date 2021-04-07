@@ -38,6 +38,10 @@ KIC = csvTab[csvTab[:,:Group] .== "KIC",:]
 KIT = csvTab[csvTab[:,:Group] .== "KIT",:]
 KIV = csvTab[csvTab[:,:Group] .== "KIV",:]
 
+KIC = KIC[KIC[:,:Layer] .== "VI",:]
+KIT = KIT[KIT[:,:Layer] .== "VI",:]
+KIV = KIV[KIV[:,:Layer] .== "VI",:]
+
 # performing this very roughly now to get a sense for it
 KICpream   = KIC[KIC[:,:Condition] .== "preAM_1",:]
 KICpream   = filter(row -> ! isnan(row.ObsDist_lowgam), KICpream) # find out where nans coming from!!
@@ -120,21 +124,28 @@ TvCcl = pvalue(EqualVarianceTTest(KITcl.ObsDist_lowgam, KICcl.ObsDist_lowgam))
 TvVcl = pvalue(EqualVarianceTTest(KITcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
 CvVcl = pvalue(EqualVarianceTTest(KICcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
 
-TvCpream = effectsize(CohenD(KITpream.ObsDist_lowgam, KICpream.ObsDist_lowgam))
-TvVpream = effectsize(CohenD(KITpream.ObsDist_lowgam, KIVpream.ObsDist_lowgam))
-CvVpream = effectsize(CohenD(KICpream.ObsDist_lowgam, KIVpream.ObsDist_lowgam))
+TvCpreamEF = effectsize(CohenD(KITpream.ObsDist_lowgam, KICpream.ObsDist_lowgam))
+TvVpreamEF = effectsize(CohenD(KITpream.ObsDist_lowgam, KIVpream.ObsDist_lowgam))
+CvVpreamEF = effectsize(CohenD(KICpream.ObsDist_lowgam, KIVpream.ObsDist_lowgam))
 
-TvCam = effectsize(CohenD(KITam.ObsDist_lowgam, KICam.ObsDist_lowgam))
-TvVam = effectsize(CohenD(KITam.ObsDist_lowgam, KIVam.ObsDist_lowgam))
-CvVam = effectsize(CohenD(KICam.ObsDist_lowgam, KIVam.ObsDist_lowgam))
+TvCamEF = effectsize(CohenD(KITam.ObsDist_lowgam, KICam.ObsDist_lowgam))
+TvVamEF = effectsize(CohenD(KITam.ObsDist_lowgam, KIVam.ObsDist_lowgam))
+CvVamEF = effectsize(CohenD(KICam.ObsDist_lowgam, KIVam.ObsDist_lowgam))
 
-TvCprecl = effectsize(CohenD(KITprecl.ObsDist_lowgam, KICprecl.ObsDist_lowgam))
-TvVprecl = effectsize(CohenD(KITprecl.ObsDist_lowgam, KIVprecl.ObsDist_lowgam))
-CvVprecl = effectsize(CohenD(KICprecl.ObsDist_lowgam, KIVprecl.ObsDist_lowgam))
+TvCpreclEF = effectsize(CohenD(KITprecl.ObsDist_lowgam, KICprecl.ObsDist_lowgam))
+TvVpreclEF = effectsize(CohenD(KITprecl.ObsDist_lowgam, KIVprecl.ObsDist_lowgam))
+CvVpreclEF = effectsize(CohenD(KICprecl.ObsDist_lowgam, KIVprecl.ObsDist_lowgam))
 
-TvCcl = effectsize(CohenD(KITcl.ObsDist_lowgam, KICcl.ObsDist_lowgam))
-TvVcl = effectsize(CohenD(KITcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
-CvVcl = effectsize(CohenD(KICcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
+TvCclEF = effectsize(CohenD(KITcl.ObsDist_lowgam, KICcl.ObsDist_lowgam))
+TvVclEF = effectsize(CohenD(KITcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
+CvVclEF = effectsize(CohenD(KICcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
 
-## all pvalues significant, all cohen's d very small
-## and there you have it. There doesn't seem to be a difference under anesthesia 
+## all pvalues significant, all cohen's d very small or small
+
+Tprevcl = pvalue(EqualVarianceTTest(KITprecl.ObsDist_lowgam, KITcl.ObsDist_lowgam))
+TprevclEF = effectsize(CohenD(KITprecl.ObsDist_lowgam, KITcl.ObsDist_lowgam))
+
+Tprevam = pvalue(EqualVarianceTTest(KITpream.ObsDist_lowgam, KITam.ObsDist_lowgam))
+TprevamEF = effectsize(CohenD(KITpream.ObsDist_lowgam, KITam.ObsDist_lowgam))
+
+## within group before and after laser for treated shows no difference
