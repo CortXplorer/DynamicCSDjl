@@ -4,6 +4,7 @@
 /Data
 .vscode
 .Rhistory
+.RData
 
 *.csv
 *.txt
