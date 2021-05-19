@@ -1,6 +1,6 @@
 function PeakRatio_Between(data,Stat,whichstim="2Hz",stimtype="CL",trialtype="TA")
     # Input: folder path data, table for ratio of 2 hz and 5 hz, all groups being tested
-    # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the ratio of final to first peak response between each group
+    # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for a welch's t test (2 sample t test) of the ratio of final to first peak response between each group
 
     # Setup for simple 2 sample t test from HypothesisTests ->
     # 3 between group comparisons across 5 measurement types and 5 layers:
@@ -86,7 +86,7 @@ end
 
 function PeakRatio_Within(data,Stat,whichstim="2Hz",stimtype="CL",trialtype="TA")
     # Input: folder path data, table for ratio of 2 hz and 5 hz, all groups being tested
-    # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the ratio of final to first peak response between each measurement to the first
+    # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for a welch's t test (2 sample t test) of the ratio of final to first peak response between each measurement to the first
 
     # Setup for simple 2 sample t test from HypothesisTests ->
     # 4 within group comparisons per group across 5 measurement types and 5 layers:
@@ -127,15 +127,15 @@ function PeakRatio_Within(data,Stat,whichstim="2Hz",stimtype="CL",trialtype="TA"
             Gr_4 = filter(row -> ! isnan(row.RatioAMP), Gr_4)
 
             # find the p value outcome for group between measurements
-            Prev1_AMP[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioAMP], Gr_1[:,:RatioAMP]))
-            Prev2_AMP[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioAMP], Gr_2[:,:RatioAMP]))
-            Prev3_AMP[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioAMP], Gr_3[:,:RatioAMP]))
-            Prev4_AMP[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioAMP], Gr_4[:,:RatioAMP]))
+            Prev1_AMP[count[1]]  = pvalue(UnequalVarianceTTest(Gr_Pre[:,:RatioAMP], Gr_1[:,:RatioAMP]))
+            Prev2_AMP[count[1]]  = pvalue(UnequalVarianceTTest(Gr_Pre[:,:RatioAMP], Gr_2[:,:RatioAMP]))
+            Prev3_AMP[count[1]]  = pvalue(UnequalVarianceTTest(Gr_Pre[:,:RatioAMP], Gr_3[:,:RatioAMP]))
+            Prev4_AMP[count[1]]  = pvalue(UnequalVarianceTTest(Gr_Pre[:,:RatioAMP], Gr_4[:,:RatioAMP]))
 
-            Prev1_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_1[:,:RatioRMS]))
-            Prev2_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_2[:,:RatioRMS]))
-            Prev3_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_3[:,:RatioRMS]))
-            Prev4_RMS[count[1]]  = pvalue(EqualVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_4[:,:RatioRMS]))
+            Prev1_RMS[count[1]]  = pvalue(UnequalVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_1[:,:RatioRMS]))
+            Prev2_RMS[count[1]]  = pvalue(UnequalVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_2[:,:RatioRMS]))
+            Prev3_RMS[count[1]]  = pvalue(UnequalVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_3[:,:RatioRMS]))
+            Prev4_RMS[count[1]]  = pvalue(UnequalVarianceTTest(Gr_Pre[:,:RatioRMS], Gr_4[:,:RatioRMS]))
             # Cohen's D
             if isnan(Prev1_AMP[count[1]])
                 Prev1_CDAMP[count[1]]  = NaN
@@ -201,7 +201,7 @@ end
 
 function Peak1_Between(data,Stat,whichpeak="1st",whichstim="2Hz",stimtype="CL",trialtype="TA")
     # Input: folder path data, table for peak amp/lat of 2 hz or 5 hz, all groups being tested
-    # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an unequal test of variance (2 sample t test) of the peak amp and lat of the first response between each group
+    # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for a welch's t test (2 sample t test) of the peak amp and lat of the first response between each group
 
     # Setup for simple 2 sample t test from HypothesisTests ->
     # 3 between group comparisons across 5 measurement types and 5 layers:
@@ -275,7 +275,7 @@ end
 
 function Peak1_Within(data,Stat,whichpeak="1st",whichstim="2Hz",stimtype="CL",trialtype="TA")
     # Input: folder path data, table for peak amp/lat of 2 hz and 5 hz, all groups being tested
-    # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for an equal test of variance (2 sample t test) of the peak amp and lat of the first response between each measurement to the first
+    # Output: table in folder Data/AvrecPeakStats which contains the pvalue result for a welch's t test (2 sample t test) of the peak amp and lat of the first response between each measurement to the first. Single trials are NOT equal before and after laser so a paired sample t test would be throwing out data
 
     # Setup for simple 2 sample t test from HypothesisTests ->
     # 4 within group comparisons per group across 5 measurement types and 5 layers:
@@ -330,50 +330,50 @@ function Peak1_Within(data,Stat,whichpeak="1st",whichstim="2Hz",stimtype="CL",tr
                 Prev1_Amp[count[1]] = NaN
                 Prev1_Lat[count[1]] = NaN
             else
-                Prev1_Amp[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G1_amp[:,:PeakAmp]))
-                Prev1_Lat[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G1_amp[:,:PeakLat]))
+                Prev1_Amp[count[1]] = pvalue(UnequalVarianceTTest(GP_amp[:,:PeakAmp], G1_amp[:,:PeakAmp]))
+                Prev1_Lat[count[1]] = pvalue(UnequalVarianceTTest(GP_amp[:,:PeakLat], G1_amp[:,:PeakLat]))
             end
             if isempty(GP_amp) || isempty(G2_amp) || (size(GP_amp)[1]==1 && size(G2_amp)[1]==1)
                 Prev2_Amp[count[1]] = NaN
                 Prev2_Lat[count[1]] = NaN
             else
-                Prev2_Amp[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G2_amp[:,:PeakAmp]))
-                Prev2_Lat[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G2_amp[:,:PeakLat]))
+                Prev2_Amp[count[1]] = pvalue(UnequalVarianceTTest(GP_amp[:,:PeakAmp], G2_amp[:,:PeakAmp]))
+                Prev2_Lat[count[1]] = pvalue(UnequalVarianceTTest(GP_amp[:,:PeakLat], G2_amp[:,:PeakLat]))
             end
             if isempty(GP_amp) || isempty(G3_amp) || (size(GP_amp)[1]==1 && size(G3_amp)[1]==1)
                 Prev3_Amp[count[1]] = NaN
                 Prev3_Lat[count[1]] = NaN
             else
-                Prev3_Amp[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G3_amp[:,:PeakAmp]))
-                Prev3_Lat[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G3_amp[:,:PeakLat]))
+                Prev3_Amp[count[1]] = pvalue(UnequalVarianceTTest(GP_amp[:,:PeakAmp], G3_amp[:,:PeakAmp]))
+                Prev3_Lat[count[1]] = pvalue(UnequalVarianceTTest(GP_amp[:,:PeakLat], G3_amp[:,:PeakLat]))
             end
             if isempty(GP_amp) || isempty(G4_amp) || (size(GP_amp)[1]==1 && size(G4_amp)[1]==1)
                 Prev4_Amp[count[1]] = NaN
                 Prev4_Lat[count[1]] = NaN
             else
-                Prev4_Amp[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakAmp], G4_amp[:,:PeakAmp]))
-                Prev4_Lat[count[1]] = pvalue(EqualVarianceTTest(GP_amp[:,:PeakLat], G4_amp[:,:PeakLat]))
+                Prev4_Amp[count[1]] = pvalue(UnequalVarianceTTest(GP_amp[:,:PeakAmp], G4_amp[:,:PeakAmp]))
+                Prev4_Lat[count[1]] = pvalue(UnequalVarianceTTest(GP_amp[:,:PeakLat], G4_amp[:,:PeakLat]))
             end
 
             if isempty(GP_rms) || isempty(G1_rms) || (size(GP_rms)[1]==1 && size(G1_rms)[1]==1)
                 Prev1_RMS[count[1]] = NaN
             else
-                Prev1_RMS[count[1]] = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G1_rms[:,:RMS]))
+                Prev1_RMS[count[1]] = pvalue(UnequalVarianceTTest(GP_rms[:,:RMS], G1_rms[:,:RMS]))
             end
             if isempty(GP_rms) || isempty(G2_rms) || (size(GP_rms)[1]==1 && size(G2_rms)[1]==1)
                 Prev2_RMS[count[1]] = NaN
             else
-                Prev2_RMS[count[1]] = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G2_rms[:,:RMS]))
+                Prev2_RMS[count[1]] = pvalue(UnequalVarianceTTest(GP_rms[:,:RMS], G2_rms[:,:RMS]))
             end
             if isempty(GP_rms) || isempty(G3_rms) || (size(GP_rms)[1]==1 && size(G3_rms)[1]==1)
                 Prev3_RMS[count[1]] = NaN
             else
-                Prev3_RMS[count[1]] = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G3_rms[:,:RMS]))
+                Prev3_RMS[count[1]] = pvalue(UnequalVarianceTTest(GP_rms[:,:RMS], G3_rms[:,:RMS]))
             end 
             if isempty(GP_rms) || isempty(G4_rms) || (size(GP_rms)[1]==1 && size(G4_rms)[1]==1)
                 Prev4_RMS[count[1]] = NaN
             else
-                Prev4_RMS[count[1]] = pvalue(EqualVarianceTTest(GP_rms[:,:RMS], G4_rms[:,:RMS]))
+                Prev4_RMS[count[1]] = pvalue(UnequalVarianceTTest(GP_rms[:,:RMS], G4_rms[:,:RMS]))
             end
             #Cohen's D
             if isnan(Prev1_Amp[count[1]]) # I hate this solution so much but CohenD throws an error instead of giving a NaN output like the pvalue above
