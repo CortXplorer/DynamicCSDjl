@@ -2,20 +2,37 @@
 # The vector strength and mean phase were obtained by expressing spike times relative to the phase of the modulator, representing each spike as a unit vector with orientation given by that phase, and computing the sum of the unit vectors. The vector strength was given by the length of the resultant vector divided by the number of vectors. It could range from 0 (no phase locking) to 1 (all spikes at identical phase); spike probability exactly following the sine modulator waveform would yield a vector strength of 0.5. The mean phase was given by the orientation of the resultant vector. The mean phase lag tended to increase linearly with increasing modulator frequency.
 
 using DSP, FFTW
+using CSV, DataFrames
 
-# prep the data which will fluxuate
-peaklat   = Int.(ceil.(rand(100)*100)) # list of fake latencies
-peaklat[peaklat .> 50] = peaklat[peaklat .> 50].+150 # create more jitter
-clickfreq = 2    # stimulus frequency
+home    = @__DIR__
+data    = joinpath(home,"Data")
+func    = joinpath(home,"functions")
+# group   = joinpath(home,"groups")
+# figs    = joinpath(home,"figs")
+# spect   = joinpath(data,"Spectral")
+
+# include(joinpath(group,"callGroup.jl"))
+include(joinpath(func,"VSfunc.jl"))
+
+# unchanging parameters:
 sr        = 1000 # sampling rate
 
-function getAMwave(clickfreq=2,sr=1000)
+# open the dataframe in the workspace
+PeakDatST = CSV.File(joinpath(data,"AVRECPeakAMST.csv")) |> DataFrame
 
-    t  = 0:1/sr:1 # time course
-    wave = sin.((2*π*clickfreq*t).+3π/2)
-    return wave
+# determine which click frequency 
+clickfreq = 2    # stimulus frequency
 
-end
+# sort which parameters we're pulling
+KIC = PeakDatST[PeakDatST[:,:Group] .== "KIC",:]
+KIC = KIC[KIC[:,:Animal] .== "KIC02",:]
+KIC = KIC[KIC[:,:Layer] .== "All",:]
+KIC = KIC[KIC[:,:Measurement] .== "preAM_1",:]
+KIC = KIC[KIC[:,:ClickFreq] .== clickfreq,:]
+
+# our final list of latencies:
+KIC = filter(row -> ! isnan(row.PeakLat), KIC)
+peaklat = Int.(KIC[:,:PeakLat])
 
 # generate the AM wave used and get instantaneous phase
 wave = getAMwave(clickfreq,sr) # currently below
@@ -57,3 +74,5 @@ elseif avgi < 0 && avgj > 0 # upper left target
 end
 
 # return vstrength, Z, p, meanphase
+
+# Fuck yes. I got this.
