@@ -19,15 +19,6 @@ if size(datX,2) != prod(levels,dims=1)[1]
     error("Ensure the the number of columns equals the product of the levels. E.g.: If there are 2 groups and 2 measurements, there should be 4 columns. 2 goups and 4 measurements should have 8 columns. Horizontally concatonate the groups' vertically stacked measurement results.")
 end
 
-## Get rid of the code below if I'm right that it's not needed:
-# if size(datX,2) > prod(levels,dims=1)[1] # n of observations per cell
-#     b    = size(datX,2) / 2
-#     newX = datX[:,Int(b)+1:end]
-#     datX = datX[:,1:Int(b)] 
-# else
-#     newX = ones(size(datX))
-# end
-
 nSub, nVar = size(rawX,1), size(rawX,2)
 
 # remove and store subject effects
