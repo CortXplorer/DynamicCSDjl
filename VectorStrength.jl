@@ -1,7 +1,7 @@
 # from https://journals.physiology.org/doi/pdf/10.1152/jn.01109.2007 :
 # The vector strength and mean phase were obtained by expressing spike times relative to the phase of the modulator, representing each spike as a unit vector with orientation given by that phase, and computing the sum of the unit vectors. The vector strength was given by the length of the resultant vector divided by the number of vectors. It could range from 0 (no phase locking) to 1 (all spikes at identical phase); spike probability exactly following the sine modulator waveform would yield a vector strength of 0.5. The mean phase was given by the orientation of the resultant vector. The mean phase lag tended to increase linearly with increasing modulator frequency.
 
-using DSP, FFTW, HypothesisTests
+using DSP, FFTW
 
 # prep the data which will fluxuate
 peaklat   = Int.(ceil.(rand(100)*100)) # list of fake latencies
@@ -24,6 +24,8 @@ wavephase = angle.(hilbert(wave)) # Compute phase of wave
 # get the phase at each time point of signal peak amplitude
 orientation = wavephase[peaklat]
 
+### Rayleigh Test of circular uniformity ### 
+# _____________________________________________________________________________________
 # break vector into components i and j to compute sums, averages, and then the resultant vector 
 i = cos.(orientation) # get component i 
 j = sin.(orientation)
@@ -40,6 +42,7 @@ p = exp(-Z)
 
 # let's plot that as a simple histogram 
 # histogram(orientation,xlims=(-π,π),xticks=-π:4/π:π,label="moderator phase at peak latency")
+# _____________________________________________________________________________________
 
 meanphase = atan(abs(avgj)/abs(avgi)) # find the mean phase in radian; 
 # this gives the corresponding angle upper right quadrant. we need to translate it to the correct quadrant based on the polar graph and signs of i and j
@@ -53,4 +56,4 @@ elseif avgi < 0 && avgj > 0 # upper left target
     meanphase = π - meanphase
 end
 
-
+# return vstrength, Z, p, meanphase
