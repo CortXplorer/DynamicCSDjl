@@ -3,6 +3,7 @@
 
 using DSP, FFTW
 using CSV, DataFrames
+using StatsPlots
 
 home    = @__DIR__
 data    = joinpath(home,"Data")
@@ -22,3 +23,31 @@ for curtype = type
     end
 end
 
+
+type = "CL" # "AM" "CL"
+clickfreq = 40 # 2 5 10 20 40 
+layer = "IV" # "All" "I_II" "IV" "VI"
+
+FileName = type * "_" * string(clickfreq) * "_VectorStrength_Stats.csv" 
+statout  = CSV.File(joinpath(data,"VSoutput",FileName)) |> DataFrame
+
+CurRun = statout[statout[:,:Layer] .== layer,:]
+
+# vstrengthplot = @df CurRun groupedboxplot(:Measurement,:VectorStrenght, group = :Group, markerstrokewidth=0) 
+# savename = FileName[1:end-4] * ".png"
+# savefig(vstrengthplot, joinpath(data,"VSoutput",savename))
+
+CurRun = CurRun[CurRun[:,:P] .< 0.001,:]
+
+# mphaseplot = @df CurRun groupedviolin(:Measurement,:MeanPhase, group = :Group) #BIMODAL!!!
+# savename = "Phase" * FileName[1:end-4] * ".png"
+# savefig(mphaseplot, joinpath(data,"VSoutput",savename))
+
+vstrengthplot = @df CurRun groupedboxplot(:Measurement,:VectorStrenght, group = :Group, markerstrokewidth=0) 
+savename = "Corrected" * FileName[1:end-4] * ".png"
+savefig(vstrengthplot, joinpath(data,"VSoutput",savename))
+
+# scatter(statout[:,:P])
+# histogram(statout[:,:VectorStrenght])
+# histogram(statout[:,:MeanPhase])
+# histogram(statout[:,:Z])
