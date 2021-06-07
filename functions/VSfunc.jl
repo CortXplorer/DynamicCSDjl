@@ -27,18 +27,22 @@ function VSstats(data, sr, type, clickfreq)
                     CurDat = LaDat[LaDat[:,:Measurement] .== iMea,:]
 
                     # our final list of latencies:
-                    CurDat = filter(row -> ! isnan(row.PeakLat), CurDat)
-                    peaklat = Int.(CurDat[:,:PeakLat])
+                    CurDat      = filter(row -> ! isnan(row.PeakLat), CurDat)
+                    peaklat     = Int.(CurDat[:,:PeakLat])
+                    orderlist   = Int.(CurDat[:,:OrderofClick])
+                    # get the right timing based on stim presentation and remove responses before 100 ms to avoid onset synchronization
+                    peaklat_cor = ((orderlist .- 1) .* Int(1000/clickfreq)) .+ peaklat
+                    peaklat_cor = peaklat_cor[peaklat_cor .> 100]
 
                     # generate the AM wave used and get instantaneous phase
                     wave = getAMwave(clickfreq,sr) # currently below
                     wavephase = angle.(hilbert(wave)) # Compute phase of wave
 
                     # get the phase at each time point of signal peak amplitude
-                    orientation = wavephase[peaklat]
+                    orientation = wavephase[peaklat_cor]
 
                     ### Rayleigh Test of circular uniformity ### 
-                    # __________________________________________________________________________
+                    # ______________________________________________________________________
                     # break vector into components i and j to compute sums, averages, and then the resultant vector 
                     i = cos.(orientation) # get component i 
                     j = sin.(orientation)
@@ -55,7 +59,7 @@ function VSstats(data, sr, type, clickfreq)
 
                     # we can plot that as a simple histogram: 
                     # histogram(orientation,xlims=(-π,π),xticks=-π:4/π:π,label="moderator phase at peak latency")
-                    # __________________________________________________________________________
+                    # ______________________________________________________________________
 
                     meanphase = atan(abs(avgj)/abs(avgi)) # find the mean phase in radian; 
                     # this gives the corresponding angle upper right quadrant. we need to translate it to the correct quadrant based on the polar graph and signs of i and j
