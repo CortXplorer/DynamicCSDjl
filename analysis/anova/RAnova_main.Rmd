@@ -1,0 +1,398 @@
+---
+title: "Mixed ANOVA + Pairwise Comparison"
+date: "6/3/2021"
+output:
+  html_document:
+    toc: true
+    df_print: paged
+    theme: journal
+    code_folding: hide
+    
+knit: 
+    (function(input, ...) {
+        rmarkdown::render(input, output_file = "RAnova_AMST.html")
+    })
+---
+
+# Description
+
+**Source of motivation: [Mixed ANOVA in R](https://www.datanovia.com/en/lessons/mixed-anova-in-r)**
+
+## Assumptions Check
+
+-   **Outliers**. Values above `Q3 + 1.5xIQR` or below `Q1 - 1.5xIQR` are considered as outliers. Values above `Q3 + 3xIQR` or below `Q1 - 3xIQR` are considered as extreme points (or extreme outliers). Observations that are considered as extreme points are marked red.
+
+-   **Normality Assumptions**. Plot shows Q-Q plot for subsets of data. If points lie on the line, we can assume that data is fairly symmetrical (and that's what we want).
+
+-   **Homogeneity of Variance Assumption**. Performed using [Levene's test](https://en.wikipedia.org/wiki/Levene%27s_test).
+
+    -   $H_0$: the groups have equal population variances
+    -   $H_A$: the groups don't have equal population variances
+    -   Observations with p-value \< 0.05 are marked red, since they may violate the ANOVA results.
+
+## Mixed ANOVA
+
+"*In statistics, a mixed-design analysis of variance model, also known as a split-plot ANOVA, is used to test for differences between two or more independent groups whilst subjecting participants to repeated measures.*" ([Wikipedia](https://en.wikipedia.org/wiki/Mixed-design_analysis_of_variance))
+
+-   within subjects group (with repeated measures): `Measurement`
+-   between subjects group: `Group`
+
+## Post-hoc Tests
+
+-   **Significant two-way interaction**. Can be used if an interaction term in Mixed ANOVA results showed significance. In other words, impact of `Group` on the outcome variable (`PeakAmp`, `PeakLat`, `RMS`) depends on the `Measurement` (and vice versa)
+
+    -   **Effect of `Group` at each `Measurement`**. Shows the **simple main effect** of the `Group`
+
+    -   **Pairwise comparisons between `Group`**. Performs [Welch's t-tests](https://en.wikipedia.org/wiki/Welch%27s_t-test) (for unequal variances) for comparing `Group` for each `Measurement`
+
+    -   **Effect of `Measurement` at each level of `Group`**. Shows the **simple main effect** of the **`Measurement`**
+
+    -   **Pairwise comparisons between `Measurement`**. Performs **paired** two-sample t-test for comparing `Measurement` for each `Group`.
+
+-   **Non-significant two-way interaction**. Shows the **main effect** for `Group` and `Measurement`. Used if there was non-significant two-way interaction.
+
+    For each table observations with adjusted p-value (using Bonferroni correction) which is less then 0.05 are marked green.
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
+library(knitr)
+library(kableExtra)
+```
+
+```{r message=FALSE, warning=FALSE}
+raw_data <- read_csv("../../Data_new/AVRECPeakAMST.csv")
+data_type <- "AMST"
+
+layers <- unique(raw_data$Layer)
+stimfreq <- unique(raw_data$ClickFreq)
+metrics <- c("PeakAmp", "PeakLat", "RMS")
+
+red_color <- "#ffb3b3"
+green_color <- "#d6f5d6"
+
+# values for testing
+freq <- 2
+layer <- "All"
+metric <- "PeakAmp"
+```
+
+# Results {.tabset .tabset-fade .tabset-pills}
+
+```{r message=FALSE, warning=FALSE, results='asis'}
+for (freq in stimfreq){
+# for (freq in c(2, 5)){
+  cat("##", freq, "Hz Frequency {.tabset .tabset-fade .tabset-pills} \n")
+  
+  for (layer in layers){
+  # for (layer in c("All", "I_II")){
+    cat("###", layer, " Layer {.tabset .tabset-fade .tabset-pills}\n")
+    
+    model_data <- raw_data %>% 
+      filter(
+        ClickFreq == freq,
+        Layer == layer,
+        OrderofClick == 1)
+    
+    if(grepl("ST", data_type)){
+      model_data <- model_data %>% 
+        group_by(Group, Animal, Measurement) %>% 
+        summarize(
+          PeakAmp = mean(PeakAmp, na.rm = TRUE),
+          PeakLat = mean(PeakLat, na.rm = TRUE),
+          RMS = mean(RMS, na.rm = TRUE)) %>% 
+        ungroup()
+    }
+    
+      model_data <- model_data %>% 
+        select(Group, Animal, Measurement, PeakAmp, PeakLat, RMS)
+    
+    if(grepl("CL", data_type)) {
+      model_data <- model_data %>% 
+      convert_as_factor(Group, Animal, Measurement) %>% 
+        reorder_levels(
+          Measurement, 
+          order = c("preCL_1", "CL_1", "CL_2", "CL_3", "CL_4"))
+    } else {
+      model_data <- model_data %>% 
+        filter(Measurement != "AM_5") %>% 
+        reorder_levels(
+          Measurement, 
+          order = c("preAM_1", "AM_1", "AM_2", "AM_3", "AM_4"))
+    }
+      
+      
+      for (metric in metrics){
+      # for (metric in c("PeakLat")){
+        
+        cat("####", metric, "{.tabset .tabset-fade .tabset-pills}\n")
+        
+        cat("##### Assumptions Check\n")
+        
+        cat("<b>===OUTLIERS===</b>\n\n")
+        
+        df <- model_data %>%
+          group_by(Measurement, Group) %>%
+          identify_outliers(eval(metric))
+        
+        if(nrow(df) > 0){
+          df %>% 
+          kable(escape = F, digits = 6) %>%
+          kable_classic_2(full_width = F) %>% 
+          kable_styling() %>% 
+          row_spec(
+            which(df$is.extreme == TRUE), bold = T, 
+            background = red_color) %>% 
+          print()
+        } else{
+          cat("\n\nNo outliers were detected.\n\n")
+        }
+        
+        cat("\n\n<b>===NORMALITY ASSUMPTION===</b>\n\n")
+        
+        p <- ggqqplot(model_data, metric, ggtheme = theme_bw()) +
+          facet_grid(Measurement ~ Group)
+        plot(p)
+
+        cat("\n\n<b>===HOMOGENEITY OF VARIANCE ASSUMPTION===</b>\n\n")
+        
+        df <- model_data %>%
+          group_by(Measurement) %>%
+          levene_test(formula = as.formula(paste0(metric, "~ Group"))) 
+        
+        df %>% 
+          kable(escape = F, digits = 3) %>%
+          kable_classic_2(full_width = F) %>% 
+          kable_styling() %>% 
+          row_spec(
+            which(df$p <= 0.05), bold = T, 
+            background = red_color) %>% 
+          print()
+        
+        cat('\n\n')
+
+        cat("##### Mixed ANOVA\n")
+
+        # Two-way mixed ANOVA test
+        res.aov <- anova_test(
+          data = model_data, dv = eval(metric), wid = Animal,
+          between = Group, within = Measurement)
+        
+        df <- get_anova_table(res.aov) %>%
+          data.frame()
+        
+        df %>% 
+          kable(escape = F) %>%
+          kable_classic_2(full_width = F) %>% 
+          kable_styling() %>% 
+          row_spec(
+            which(df$p <= 0.05), bold = T, 
+            background = green_color) %>% 
+          print()
+
+        cat('\n\n')
+
+        cat("##### Post-hoc Tests\n")
+
+        cat("\n\n<b>===SIGNIFICANT TWO-WAY INTERACTION===</b>\n\n")
+        
+        cat("\n\n\n<b>=EFFECT OF GROUP AT EACH MEASUREMENT=</b>\n\n")
+  
+        one.way <- model_data %>%
+          group_by(Measurement) %>%
+          anova_test(dv = eval(metric), wid = Animal, between = Group) %>%
+          get_anova_table() %>%
+          adjust_pvalue(method = "bonferroni")
+        
+        df <- one.way %>% 
+          data.frame() %>% 
+          select(-F)
+        df %>% 
+          kable(escape = F) %>%
+          kable_classic_2(full_width = F) %>% 
+          kable_styling() %>% 
+          row_spec(
+            which(df$p.adj <= 0.05), bold = T, 
+            background = green_color) %>% 
+          print()
+        
+        cat("\n\n\n<b>=PAIRWISE COMPARISONS BETWEEN GROUP LEVELS=</b>\n\n")
+        
+        pwc <- model_data %>%
+          group_by(Measurement) %>%
+          pairwise_t_test(
+            as.formula(paste0(metric, "~ Group")), 
+            p.adjust.method = "bonferroni",
+            pool.sd = FALSE,
+            var.equal = FALSE)
+        
+        eff_size <- model_data %>%
+          group_by(Measurement) %>%
+          cohens_d(
+            as.formula(paste0(metric, "~ Group")), 
+            var.equal = FALSE)
+        
+        df <- pwc %>% 
+          left_join(eff_size) %>% 
+          data.frame() 
+        
+        df %>% 
+          kable(escape = F, digits = 3) %>%
+          kable_classic_2(full_width = F) %>% 
+          kable_styling() %>% 
+          row_spec(
+            which(df$p.adj <= 0.05), bold = T, 
+            background = green_color) %>% 
+          print()
+        
+        cat("\n\n\n<b>=EFFECT OF MEASUREMENT AT EACH LEVEL OF GROUP=</b>\n\n")
+        
+        one.way2 <- model_data %>%
+          group_by(Group) %>%
+          anova_test(dv = eval(metric), wid = Animal, within = Measurement) %>%
+          get_anova_table() %>%
+          adjust_pvalue(method = "bonferroni")
+        
+        df <- one.way2 %>%
+          data.frame()
+        df %>% 
+          kable(escape = F) %>%
+          kable_classic_2(full_width = F) %>% 
+          kable_styling() %>% 
+          row_spec(
+            which(df$p.adj <= 0.05), bold = T, 
+            background = green_color) %>% 
+          print()
+        
+        cat("\n\n\n<b>=PAIRWISE COMPARISONS BETWEEN MEASUREMENTS AT EACH GROUP LEVELS=</b>\n\n")
+        
+        exclude_animals <- model_data %>% 
+          group_by(Animal) %>% 
+          summarise(n = n_distinct(Measurement)) %>% 
+          filter(n < 5) %>% 
+          pull(Animal)
+        
+        pwc2 <- model_data %>%
+          filter(!(Animal %in% exclude_animals)) %>% 
+          group_by(Group) %>%
+          pairwise_t_test(
+            as.formula(paste0(metric, "~ Measurement")), 
+            paired = TRUE, 
+            pool.sd = FALSE,
+            var.equal = FALSE,
+            p.adjust.method = "bonferroni"
+          )
+        
+        eff_size2 <- model_data %>%
+          filter(!(Animal %in% exclude_animals)) %>% 
+          group_by(Group) %>%
+          cohens_d(
+            as.formula(paste0(metric, "~ Measurement")), 
+            paired = TRUE, 
+            var.equal = FALSE)
+
+        df <- pwc2 %>% 
+          left_join(eff_size2) %>% 
+          data.frame()
+        df %>% 
+          kable(escape = F, digits = 3) %>%
+          kable_classic_2(full_width = F) %>% 
+          kable_styling() %>% 
+          row_spec(
+            which(df$p.adj <= 0.05), bold = T, 
+            background = green_color) %>% 
+          print()
+        
+        cat("\n\n\n<b>===NON-SIGNIFICANT TWO-WAY INTERACTION===</b>\n\n")
+        cat("\n\n\n<b>=MAIN EFFECT OF MEASUREMENT=</b>\n\n")
+        
+        df <- model_data %>%
+          filter(!(Animal %in% exclude_animals)) %>% 
+          pairwise_t_test(
+            as.formula(paste0(metric, "~ Measurement")), 
+            paired = TRUE, 
+            p.adjust.method = "bonferroni"
+          ) %>% 
+          data.frame() 
+    
+        df %>% 
+          kable(escape = F) %>%
+          kable_classic_2(full_width = F) %>% 
+          kable_styling() %>% 
+          row_spec(
+            which(df$p.adj <= 0.05), bold = T, 
+            background = green_color) %>% 
+          print()
+        
+        cat("\n\n\n<b>=MAIN EFFECT OF GROUP=</b>\n\n")
+        
+        df <- model_data %>%
+          pairwise_t_test(
+            as.formula(paste0(metric, "~ Group")), 
+            p.adjust.method = "bonferroni"
+          ) %>% 
+          data.frame() 
+        
+        df %>% 
+          kable(escape = F) %>%
+          kable_classic_2(full_width = F) %>% 
+          kable_styling() %>% 
+          row_spec(
+            which(df$p.adj <= 0.05), bold = T, 
+            background = green_color) %>% 
+          print()
+        
+        cat('\n\n')
+        
+        cat("##### Plots\n")
+        
+        pwc <- pwc %>% add_xy_position(x = "Measurement")
+        pwc2 <- pwc2 %>% add_xy_position(x = "Group")
+        
+        box_plot <- ggboxplot(
+          model_data, x = "Measurement", y = metric,
+          color = "Group", palette = "jco"
+        )
+        
+        box_plot2 <- ggboxplot(
+          model_data, x = "Group", y = metric,
+          color = "Measurement", palette = "jco"
+        )
+        
+        p <- box_plot + 
+          stat_pvalue_manual(pwc, tip.length = 0.01, hide.ns = TRUE) +
+          labs(
+            title = paste0(metric, " for ", layer, " Layer, ", freq, "Hz and 1st Click"),
+            subtitle = get_test_label(res.aov, detailed = TRUE),
+            caption = get_pwc_label(pwc)
+          )
+        
+        plot(p)
+        
+        cat('\n\n')
+        
+        p <- box_plot2 + 
+          stat_pvalue_manual(pwc2, tip.length = 0.01, hide.ns = TRUE) +
+          labs(
+            title = paste0(metric, " for ", layer, " Layer, ", freq, "Hz and 1st Click"),
+            subtitle = get_test_label(res.aov, detailed = TRUE),
+            caption = get_pwc_label(pwc2)
+          )
+        
+        plot(p)
+
+        cat('\n\n')
+      
+      cat('\n\n')
+    }
+    
+    cat('\n\n')
+  }
+  
+  cat('\n\n')
+}
+```
+
+
+

@@ -1,0 +1,273 @@
+---
+title: "Linear Mixed Models"
+author: "Ruslan Klymentiev"
+date: "6/9/2021"
+output:
+  html_document:
+    toc: true
+    df_print: paged
+    theme: journal
+    code_folding: hide
+---
+
+# Imports
+
+```{r import, message=FALSE, warning=FALSE}
+library(sjPlot)
+library(effects)
+library(car)
+library(nlme)
+library(standardize)
+library(tidyverse)
+library(gridExtra)
+library(ggpubr)
+library(knitr)
+library(car)
+library(kableExtra)
+library(lattice)
+```
+
+```{r message=FALSE, warning=FALSE}
+AVRECPeakCL <- read_csv(file = "../../Data_new/AVRECPeakCLST.csv")
+```
+
+# Data Preparation
+
+
+```{r}
+# clean data for modeling
+model_df <- AVRECPeakCL %>%
+  filter(
+    case_when(
+      ClickFreq == 2 ~ OrderofClick %in% c(1,2),
+      ClickFreq == 5 ~ OrderofClick %in% c(1,3),
+      ClickFreq == 10 ~ OrderofClick %in% c(1,5),
+      ClickFreq == 20 ~ OrderofClick %in% c(1,10),
+      ClickFreq == 40 ~ OrderofClick %in% c(1,20)),
+    # Layer != "All",
+    Measurement %in% c("preCL_1", "CL_1")) %>%  
+  mutate(
+    logRMS = log(RMS),
+    Measurement = case_when(
+      Measurement == "preCL_1" ~ "preLaser",
+      TRUE ~ "postLaser"),
+    ClickOrder = case_when(
+      OrderofClick == 1 ~ "1",
+      TRUE ~ "2")
+  ) %>% 
+  ungroup() %>%   
+  select(-c(OrderofClick, PeakLat, PeakAmp)) %>% 
+  drop_na() %>% 
+  filter(logRMS > quantile(logRMS, 0.005))
+  # filter(between(logRMS, quantile(logRMS, 0.005), quantile(logRMS, 0.995)))
+  
+
+# convert to factors
+model_df$Measurement <- factor(
+  x = model_df$Measurement, 
+  levels = c("preLaser", "postLaser"))
+model_df$ClickOrder <- factor(x = model_df$ClickOrder)
+model_df$Layer <- factor(
+  x = model_df$Layer,
+  levels = c("All", "I_II", "IV", "V", "VI"))
+model_df$Group <- factor(x = model_df$Group)
+
+
+# sum-coding
+# model_df$Measurement = named_contr_sum(model_df$Measurement, return_contr = FALSE)
+# model_df$Group = named_contr_sum(model_df$Group, return_contr = FALSE)
+# model_df$Layer = named_contr_sum(model_df$Layer, return_contr = FALSE)
+```
+
+```{r warning=FALSE, fig.height=3, fig.width=8}
+p1 <- ggplot(data = model_df) +
+  geom_histogram(
+    aes(x = RMS), bins = 50, 
+    fill = "lightblue", color = "black") +
+  labs(title = "Histogram of RMS")
+
+p2 <- model_df %>% 
+  ggplot() +
+  geom_histogram(
+    aes(x = logRMS), bins = 50, 
+    fill = "lightblue", color = "black") +
+  labs(title = "Histogram of log(RMS)")
+
+grid.arrange(p1, p2, nrow = 1)
+```
+```{r message=FALSE, warning=FALSE}
+model_df  %>% 
+    filter(ClickFreq == 5) %>%  
+ggboxplot(
+    x = "Group", y = "logRMS", color = "Measurement", 
+    palette = "jco", facet.by = c("ClickOrder", "Layer"), main = "5 Hz" #, add = "jitter",
+)
+```
+
+```{r}
+head(model_df) %>% 
+  kable(escape = F, caption = "Data overview") %>%
+  kable_classic_2(full_width = F)
+```
+
+# Modelling  {.tabset .tabset-fade .tabset-pills}
+
+## Comparing different models
+
+```{r}
+model1 <- lme(
+    logRMS ~ Group, 
+    random = (~1|Animal), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model2 <- lme(
+    logRMS ~ Group, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model3 <- lme(
+    logRMS ~ Group + Measurement, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model4 <- lme(
+    logRMS ~ Group*Measurement, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model5 <- lme(
+    logRMS ~ Group*Measurement + Layer, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model6 <- lme(
+    logRMS ~ Group*Measurement + Layer + ClickFreq, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model7 <- lme(
+    logRMS ~ Group*Measurement*Layer + ClickFreq, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model8 <- lme(
+    logRMS ~ Group*Measurement*Layer + ClickFreq + ClickOrder, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+```
+
+```{r}
+anova(
+  model1, model2, model3, model4, 
+  model5, model6, model7, model8) %>% 
+  select(-c(Model, df, L.Ratio)) %>% 
+  kable(escape = F, digits = 3, caption = "Models Comparison") %>%
+  kable_classic_2()
+```
+
+## Final model
+
+```{r}
+model_full <- lme(
+    logRMS ~ Group*Measurement*Layer + ClickFreq + ClickOrder, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    control = lmeControl(opt = "optim"))
+
+tab_model(model_full, show.stat = TRUE, show.aic = TRUE, title = "Summary of the LMM")
+```
+
+```{r}
+Anova(model_full) %>% 
+  kable(
+    escape = F, digits = 3,
+    caption = "Analysis of Deviance Table (Type II tests)") %>% 
+  kable_classic_2(full_width = F)
+```
+
+## Model Diagnostics
+
+### Random Intercepts
+
+```{r fig.width=8, fig.height=5}
+p1 <- ggplot(
+  data = data.frame(intercept = model_full$coefficients$random$Animal)) +
+  geom_histogram(
+    aes(x = X.Intercept.), bins = 25, 
+    fill = "lightblue", color = "black") +
+  labs(title = "Intercept by Animal")
+
+p2 <- ggplot(
+  data = data.frame(intercept = model_full$coefficients$random$Animal), 
+  aes(sample = X.Intercept.)) +
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title = "QQ Plot (Animal)")
+
+p3 <- ggplot(
+  data = data.frame(intercept = model_full$coefficients$random$TrialNumber)) +
+  geom_histogram(
+    aes(x = X.Intercept.), bins = 25, 
+    fill = "lightblue", color = "black") +
+  labs(title = "Intercept by Animal/TrialNumber")
+
+p4 <- ggplot(
+  data = data.frame(intercept = model_full$coefficients$random$TrialNumber), 
+  aes(sample = X.Intercept.)) +
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title = "QQ Plot (Animal/TrialNumber)")
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
+
+### Residuals Plots
+
+```{r fig.height=3, fig.width=8}
+res <- residuals(model_full)
+
+p1 <- ggplot(data = data.frame(residuals = res)) +
+  geom_histogram(aes(x = residuals), bins = 25, 
+                 fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Residuals")
+
+p2 <- ggplot(
+  data = data.frame(residuals = res), 
+  aes(sample = residuals)) +
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title = "QQ Plot of Residuals")
+
+grid.arrange(p1, p2, nrow = 1)
+```
+
+```{r fig.height=4, fig.width=8}
+p1 <- plot(model_full, resid(.) ~ fitted(.), abline=0, main = "All Data")
+p2 <- plot(model_full, resid(.) ~ fitted(.)|Animal, abline=0, main = "By Animal")
+
+grid.arrange(p1, p2, nrow = 1, widths = c(1.5,2))
+```
+
+## Effects
+
+```{r fig.height=6, fig.width=9}
+p1 <- plot(Effect(c("Group"), model_full), multiline = TRUE)
+p2 <- plot(Effect(c("Measurement"), model_full), multiline = TRUE)
+p3 <- plot(Effect(c("Layer"), model_full), multiline = TRUE)
+p4 <- plot(Effect(c("ClickFreq"), model_full), multiline = TRUE)
+p5 <- plot(Effect(c("ClickOrder"), model_full), multiline = TRUE)
+
+grid.arrange(p1, p2, p3, p4, p5, nrow = 2)
+```
+
+
+```{r fig.height=6, fig.width=9}
+p1 <- plot(Effect(c("Group", "Measurement"), model_full), multiline = TRUE)
+p2 <- plot(Effect(c("Measurement", "Layer"), model_full), multiline = TRUE)
+p3 <- plot(Effect(c("Group", "Layer"), model_full), multiline = TRUE)
+p4 <- plot(Effect(c("Layer", "Group", "Measurement"), model_full), multiline = TRUE)
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
+
+
