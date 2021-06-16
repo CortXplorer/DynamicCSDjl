@@ -23,29 +23,35 @@ for curtype = type
     end
 end
 
+# type = "CL" # "AM" "CL"
+# clickfreq = 10 # 2 5 10 20 40 
+layer = ["All" "I_II" "IV" "V" "VI"]
 
-type = "CL" # "AM" "CL"
-clickfreq = 40 # 2 5 10 20 40 
-layer = "IV" # "All" "I_II" "IV" "VI"
+for curtype = type
+    for curCF = clickfreq
+        for curlay = layer
+            FileName = curtype * "_" * string(curCF) * "_VectorStrength_Stats.csv" 
+            statout  = CSV.File(joinpath(data,"VSoutput",FileName)) |> DataFrame
 
-FileName = type * "_" * string(clickfreq) * "_VectorStrength_Stats.csv" 
-statout  = CSV.File(joinpath(data,"VSoutput",FileName)) |> DataFrame
+            CurRun = statout[statout[:,:Layer] .== curlay,:]
+            CurRun = filter(row -> ! isnan(row.VectorStrenght), CurRun)
 
-CurRun = statout[statout[:,:Layer] .== layer,:]
+            vstrengthplot = @df CurRun groupedboxplot(:Measurement,:VectorStrenght, group = :Group, markerstrokewidth=0, ylims = (0,1), legend = false) 
+            savename = FileName[1:end-4] * "_" * curlay * ".png"
+            savefig(vstrengthplot, joinpath(data,"VSoutput",savename))
 
-# vstrengthplot = @df CurRun groupedboxplot(:Measurement,:VectorStrenght, group = :Group, markerstrokewidth=0) 
-# savename = FileName[1:end-4] * ".png"
-# savefig(vstrengthplot, joinpath(data,"VSoutput",savename))
+            CurRun = CurRun[CurRun[:,:P] .< 0.001,:]
 
-CurRun = CurRun[CurRun[:,:P] .< 0.001,:]
+            vstrengthplot = @df CurRun groupedboxplot(:Measurement,:VectorStrenght, group = :Group, markerstrokewidth=0, ylims = (0,1), legend = false) 
+            savename = "Corrected" * FileName[1:end-4] * "_" * curlay * ".png"
+            savefig(vstrengthplot, joinpath(data,"VSoutput",savename))
 
-# mphaseplot = @df CurRun groupedviolin(:Measurement,:MeanPhase, group = :Group) #BIMODAL!!!
-# savename = "Phase" * FileName[1:end-4] * ".png"
-# savefig(mphaseplot, joinpath(data,"VSoutput",savename))
-
-vstrengthplot = @df CurRun groupedboxplot(:Measurement,:VectorStrenght, group = :Group, markerstrokewidth=0) 
-savename = "Corrected" * FileName[1:end-4] * ".png"
-savefig(vstrengthplot, joinpath(data,"VSoutput",savename))
+            mphaseplot = @df CurRun groupedviolin(:Measurement,:MeanPhase, group = :Group, ylims = (0,6.5), legend = false) #BIMODAL!!!
+            savename = "Phase" * FileName[1:end-4] * "_" * curlay * ".png"
+            savefig(mphaseplot, joinpath(data,"VSoutput",savename))
+        end
+    end
+end
 
 # scatter(statout[:,:P])
 # histogram(statout[:,:VectorStrenght])
