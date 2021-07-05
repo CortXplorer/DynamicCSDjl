@@ -23,9 +23,9 @@ for curtype = type
     end
 end
 
-# type = "CL" # "AM" "CL"
-# clickfreq = 10 # 2 5 10 20 40 
-layer = ["All" "I_II" "IV" "V" "VI"]
+# curtype = "CL" # "AM" "CL"
+# curCF = 10 # 2 5 10 20 40 
+layer = ["All" "I_II" "IV" "V" "VI"] # curlay = "IV" 
 
 for curtype = type
     for curCF = clickfreq
@@ -33,6 +33,7 @@ for curtype = type
             FileName = curtype * "_" * string(curCF) * "_VectorStrength_Stats.csv" 
             statout  = CSV.File(joinpath(data,"VSoutput",FileName)) |> DataFrame
 
+            # basic vector strength, no consideration for significance
             CurRun = statout[statout[:,:Layer] .== curlay,:]
             CurRun = filter(row -> ! isnan(row.VectorStrenght), CurRun)
 
@@ -40,6 +41,7 @@ for curtype = type
             savename = FileName[1:end-4] * "_" * curlay * ".png"
             savefig(vstrengthplot, joinpath(data,"VSoutput",savename))
 
+            #rule out anything non-significant
             CurRun = CurRun[CurRun[:,:P] .< 0.001,:]
 
             vstrengthplot = @df CurRun groupedboxplot(:Measurement,:VectorStrenght, group = :Group, markerstrokewidth=0, ylims = (0,1), legend = false) 
@@ -53,7 +55,3 @@ for curtype = type
     end
 end
 
-# scatter(statout[:,:P])
-# histogram(statout[:,:VectorStrenght])
-# histogram(statout[:,:MeanPhase])
-# histogram(statout[:,:Z])
