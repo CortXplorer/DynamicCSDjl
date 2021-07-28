@@ -1,0 +1,622 @@
+---
+title: "Linear Mixed Effects Model"
+author: "Katrina Deane, Ruslan Klymentiev"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    df_print: paged
+    theme: journal
+    code_folding: hide
+---
+
+```{r}
+data_type <- "CL"
+freq <- 5
+```
+
+---
+subtitle: "`r paste0(data_type, " Measurements at ", freq, " Hz")`"
+---
+
+# Imports
+
+```{r import, message=FALSE, warning=FALSE}
+library(sjPlot)
+library(effects)
+library(car)
+library(nlme)
+library(standardize)
+library(tidyverse)
+library(gridExtra)
+library(ggpubr)
+library(knitr)
+library(car)
+library(kableExtra)
+library(lattice)
+library(multcomp)
+library(lsmeans)
+library(effectsize)
+```
+
+```{r}
+glht.table <- function(x) {
+
+# https://gist.github.com/cheuerde/3acc1879dc397a1adfb0
+  pq <- summary(x)$test
+  mtests <- cbind(pq$coefficients, pq$sigma, pq$tstat, pq$pvalues)
+  error <- attr(pq$pvalues, "error")
+  pname <- switch(x$alternativ, less = paste("Pr(<", ifelse(x$df ==0, "z", "t"), ")", sep = ""), 
+  greater = paste("Pr(>", ifelse(x$df == 0, "z", "t"), ")", sep = ""), two.sided = paste("Pr(>|",ifelse(x$df == 0, "z", "t"), "|)", sep = ""))
+  colnames(mtests) <- c("Estimate", "Std. Error", ifelse(x$df ==0, "z value", "t value"), pname)
+  return(mtests)
+}
+
+```
+
+
+```{r message=FALSE, warning=FALSE}
+raw_data <- read_csv(file = paste0("../../Data_new/AVRECPeak", data_type,"ST.csv"))
+```
+
+# Data Preparation
+
+
+```{r}
+# clean data for modeling
+model_df <- raw_data %>%
+  filter(
+    ClickFreq == freq,
+    OrderofClick == 1,
+    case_when(
+      data_type == "AM" ~ Measurement %in% c("preAM_1", "AM_1"),
+      data_type == "CL" ~ Measurement %in% c("preCL_1", "CL_1"))
+    # case_when(
+      # ClickFreq == 2 ~ OrderofClick %in% c(1,2),
+      # ClickFreq == 5 ~ OrderofClick %in% c(1,3),
+      # ClickFreq == 10 ~ OrderofClick %in% c(1,5),
+      # ClickFreq == 20 ~ OrderofClick %in% c(1,10),
+      # ClickFreq == 40 ~ OrderofClick %in% c(1,20)),
+    # Layer != "All",
+    # Measurement %in% c("preAM_1", "AM_1")
+    ) %>%  
+  mutate(
+    logRMS = log(RMS),
+    Measurement = case_when(
+      grepl("pre", Measurement) ~ "preLaser",
+      TRUE ~ "postLaser")
+    # ClickOrder = case_when(
+    #   OrderofClick == 1 ~ "1",
+    #   TRUE ~ "2")
+  ) %>% 
+  ungroup() %>%   
+  drop_na(c(RMS, PeakLat)) %>% 
+  dplyr::select(-c(PeakLat, PeakAmp))
+
+  # filter(logRMS > quantile(logRMS, 0.005))
+  # filter(between(logRMS, quantile(logRMS, 0.005), quantile(logRMS, 0.995)))
+  
+
+# convert to factors
+model_df$Measurement <- factor(
+  x = model_df$Measurement, 
+  levels = c("preLaser", "postLaser"))
+# model_df$ClickOrder <- factor(x = model_df$ClickOrder)
+model_df$Layer <- factor(
+  x = model_df$Layer,
+  levels = c("All", "I_II", "IV", "V", "VI"))
+model_df$Group <- factor(x = model_df$Group)
+
+
+# sum-coding
+# model_df$Measurement = named_contr_sum(model_df$Measurement, return_contr = FALSE)
+# model_df$Group = named_contr_sum(model_df$Group, return_contr = FALSE)
+# model_df$Layer = named_contr_sum(model_df$Layer, return_contr = FALSE)
+
+rm(raw_data)
+```
+
+```{r warning=FALSE, fig.height=3, fig.width=8}
+p1 <- ggplot(data = model_df) +
+  geom_histogram(
+    aes(x = RMS), bins = 50, 
+    fill = "lightblue", color = "black") +
+  labs(title = "Histogram of RMS")
+
+p2 <- model_df %>% 
+  ggplot() +
+  geom_histogram(
+    aes(x = logRMS), bins = 50, 
+    fill = "lightblue", color = "black") +
+  labs(title = "Histogram of log(RMS)")
+
+grid.arrange(p1, p2, nrow = 1)
+```
+```{r message=FALSE, warning=FALSE}
+model_df  %>% 
+    filter(OrderofClick == 1) %>%
+ggboxplot(
+    x = "Group", y = "logRMS", color = "Measurement", 
+    palette = "jco", facet.by = "Layer", main = "1st Click" #, add = "jitter",
+)
+```
+
+```{r}
+head(model_df) %>% 
+  kable(escape = F, caption = "Data overview") %>%
+  kable_classic_2(full_width = F)
+```
+
+# Modelling  {.tabset .tabset-fade .tabset-pills}
+
+## Comparing different models
+
+```{r}
+model1 <- lme(
+    logRMS ~ Group, 
+    random = (~1|Animal), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model2 <- lme(
+    logRMS ~ Group, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model3 <- lme(
+    logRMS ~ Group + Measurement, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model4 <- lme(
+    logRMS ~ Group*Measurement, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model5 <- lme(
+    logRMS ~ Group*Measurement + Layer, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model6 <- lme(
+    logRMS ~ Group*Measurement + Layer + OrderofClick, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+model7 <- lme(
+    logRMS ~ Group*Measurement*Layer + OrderofClick, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    method = "ML",
+    control = lmeControl(opt = "optim"))
+```
+
+```{r}
+anova(
+  model1, model2, model3, model4, 
+  model5, model6, model7) %>% 
+  dplyr::select(-c(Model, df, L.Ratio)) %>% 
+  kable(escape = F, digits = 3, caption = "Models Comparison") %>%
+  kable_classic_2()
+```
+
+## Final model
+
+`logRMS ~ Group * Measurement * Layer + OrderofClick + (1|Animal/TrialNumber)`
+
+```{r}
+model_test <- lme(
+    logRMS ~ Group*Measurement*Layer, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    control = lmeControl(opt = "optim"))
+
+tab_model(model_test, show.stat = TRUE, show.aic = TRUE, title = "Summary of the LMM")
+
+anova.lme(model_test, type="marginal") 
+```
+
+
+```{r}
+res <- residuals(model_test)
+
+p1 <- ggplot(data = data.frame(residuals = res)) +
+  geom_histogram(aes(x = residuals), bins = 25, 
+                 fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Residuals")
+
+p2 <- ggplot(
+  data = data.frame(residuals = res), 
+  aes(sample = residuals)) +
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title = "QQ Plot of Residuals")
+
+grid.arrange(p1, p2, nrow = 1)
+
+
+p1 <- plot(model_test, resid(.) ~ fitted(.), abline=0, main = "All Data")
+p2 <- plot(model_test, resid(.) ~ fitted(.)|Animal, abline=0, main = "By Animal")
+
+grid.arrange(p1, p2, nrow = 1, widths = c(1.5,2))
+```
+
+
+```{r}
+df <- pairs(emmeans(model_test, ~ Group | Measurement*Layer), adjust = "tukey") %>% 
+  data.frame() 
+
+df <- df %>% bind_cols(
+  t_to_d(t = df$t.ratio, df_error = df$df) %>% 
+    data.frame() %>% 
+    round(2) %>% 
+    # mutate(d_CI = paste0("[", CI_low, ", ", CI_high, "]")) %>% 
+    dplyr::select(d)) %>% 
+  mutate(eff_size = interpret_d(d)) %>% 
+  dplyr::select(-c(df))
+
+df %>% 
+  kable(escape = F, digits = 4, caption = "Multiple Comparisons (between Groups)") %>%
+  kable_classic_2(full_width = F) %>% 
+  footnote(general = "P value adjustment: Bonferroni method for 3 tests") %>% 
+  kable_styling() %>%
+  row_spec(
+    which(df$p.value < 0.05), bold = T,
+    background = "#d6f5d6")
+```
+
+
+
+```{r}
+df <- pairs(emmeans(model_test, ~ Measurement | Group*Layer), adjust = "tukey") %>% 
+  data.frame() 
+
+df <- df %>% bind_cols(
+  t_to_d(t = df$t.ratio, df_error = df$df) %>% 
+    data.frame() %>% 
+    round(2) %>% 
+    # mutate(d_CI = paste0("[", CI_low, ", ", CI_high, "]")) %>% 
+    dplyr::select(d)) %>% 
+  mutate(eff_size = interpret_d(d)) %>% 
+  dplyr::select(-c(df))
+
+df %>% 
+  kable(escape = F, digits = 4, caption = "Multiple Comparisons (between Groups)") %>%
+  kable_classic_2(full_width = F) %>% 
+  footnote(general = "P value adjustment: Bonferroni method for 3 tests") %>% 
+  kable_styling() %>%
+  row_spec(
+    which(df$p.value < 0.05), bold = T,
+    background = "#d6f5d6")
+```
+
+```{r}
+emmip(model_test, formula = Measurement ~ Group | Layer) +
+  theme_minimal()
+```
+
+
+
+```{r}
+model_full <- lme(
+    logRMS ~ Group*Measurement*Layer + OrderofClick, 
+    random = (~1|Animal/TrialNumber), data = model_df,
+    control = lmeControl(opt = "optim"))
+
+tab_model(model_full, show.stat = TRUE, show.aic = TRUE, title = "Summary of the LMM")
+```
+
+
+## ANOVA
+
+```{r}
+anova.lme(model_full, type="marginal") %>% 
+  kable(
+    escape = F, digits = 3,
+    caption = "ANOVA (Type III)") %>% 
+  kable_classic_2(full_width = F)
+```
+
+
+```{r}
+# car::Anova(model_test, type = 3, test.statistic = "F") %>% 
+#   kable(
+#     escape = F, digits = 3,
+#     caption = "Analysis of Deviance Table (Type III tests)") %>% 
+#   kable_classic_2(full_width = F)
+```
+
+## Post-hoc tests
+
+```{r}
+# library(EMAtools)
+# round(lme.dscore(model_full, model_df, type = "nlme"), 3)
+```
+
+```{r}
+df <- pairs(lsmeans(model_full, ~ Group | Measurement*Layer), adjust = "bonf") %>% 
+  data.frame() 
+
+df <- df %>% bind_cols(
+  t_to_d(t = df$t.ratio, df_error = df$df) %>% 
+    data.frame() %>% 
+    round(2) %>% 
+    # mutate(d_CI = paste0("[", CI_low, ", ", CI_high, "]")) %>% 
+    dplyr::select(d)) %>% 
+  mutate(eff_size = interpret_d(d)) %>% 
+  dplyr::select(-c(df))
+
+df %>% 
+  kable(escape = F, digits = 4, caption = "Multiple Comparisons (between Groups)") %>%
+  kable_classic_2(full_width = F) %>% 
+  footnote(general = "P value adjustment: Bonferroni method for 3 tests") %>% 
+  kable_styling() %>%
+  row_spec(
+    which(df$p.value < 0.05), bold = T,
+    background = "#d6f5d6")
+```
+
+```{r}
+df <- pairs(lsmeans(model_full, ~ Measurement | Group*Layer), adjust = "bonf") %>% 
+  data.frame() 
+
+df <- df %>% bind_cols(
+  t_to_d(t = df$t.ratio, df_error = df$df) %>% 
+    data.frame() %>% 
+    round(2) %>% 
+    # mutate(d_CI = paste0("[", CI_low, ", ", CI_high, "]")) %>% 
+    dplyr::select(d)) %>% 
+  mutate(eff_size = interpret_d(d)) %>% 
+  dplyr::select(-c(df))
+
+df %>% 
+  kable(escape = F, digits = 4, caption = "Multiple Comparisons (between Measurement)") %>%
+  kable_classic_2(full_width = F) %>% 
+  # footnote(general = "P value adjustment: Bonferroni method for 3 tests") %>% 
+  kable_styling() %>%
+  row_spec(
+    which(df$p.value < 0.05), bold = T,
+    background = "#d6f5d6")
+```
+
+```{r}
+# df <- pairs(lsmeans(model_full, ~ Layer | Group*Measurement), adjust = "bonf") %>% 
+#   data.frame() 
+# 
+# df <- df %>% bind_cols(
+#   t_to_d(t = df$t.ratio, df_error = df$df) %>% 
+#     data.frame() %>% 
+#     round(2) %>% 
+#     # mutate(d_CI = paste0("[", CI_low, ", ", CI_high, "]")) %>% 
+#     dplyr::select(d)) %>% 
+#   mutate(eff_size = interpret_d(d)) %>% 
+#   dplyr::select(-c(df))
+# 
+# df %>% 
+#   kable(escape = F, digits = 4, caption = "Multiple Comparisons (between Layer)") %>%
+#   kable_classic_2(full_width = F) %>% 
+#   footnote(general = "P value adjustment: bonferroni method for 10 tests") %>%
+#   kable_styling() %>%
+#   row_spec(
+#     which(df$p.value < 0.05), bold = T,
+#     background = "#d6f5d6")
+```
+
+
+```{r}
+# m.g.l <- pairs(lsmeans(model_full, ~ Measurement | Group*Layer), adjust = "bonferroni")
+# g.m.l <- pairs(lsmeans(model_full, ~ Group | Measurement*Layer), adjust = "bonferroni")
+# l.m.g <- pairs(lsmeans(model_full, ~ Layer | Measurement*Group), adjust = "bonferroni")
+# 
+# temp <- rbind(m.g.l, g.m.l, l.m.g, adjust = "tukey") %>%
+#   data.frame()
+# 
+# df <- temp %>% bind_cols(
+#   t_to_d(t = temp$t.ratio, df_error = temp$df) %>% 
+#     data.frame() %>% 
+#     round(2) %>% 
+#     # mutate(d_CI = paste0("[", CI_low, ", ", CI_high, "]")) %>% 
+#     dplyr::select(d)) %>% 
+#   mutate(eff_size = interpret_d(d)) %>% 
+#   dplyr::select(-c(df))
+# 
+# df %>% 
+#   kable(escape = F, digits = 4, caption = "Multiple Comparisons") %>%
+#   kable_classic_2(full_width = F) %>% 
+#   footnote(general = "P value adjustment: Bonferroni method for 105 tests") %>% 
+#   kable_styling() %>%
+#   row_spec(
+#     which(df$p.value < 0.05), bold = T,
+#     background = "#d6f5d6")
+```
+
+```{r}
+# glht(model_full, emm( ~ Group | Measurement*Layer), test=adjusted(type="bonf"))
+# pairs(lsmeans(model_full, ~ Measurement | Group*Layer), adjust = "bonferroni")
+# 
+# library(phia)
+# interact(model_full)
+```
+
+
+```{r warning=FALSE}
+# temp <- glht(model_full, linfct = mcp(Group = "Tukey"), test = adjusted("holm")) %>%
+#   glht.table() %>%
+#   data.frame()
+# temp$d <- z_to_d(z = temp$z.value, n = 24) %>%
+#   data.frame() %>%
+#   dplyr::pull(d)
+# temp %>%
+#   kable(escape = F, digits = 3, caption = "Groups Comparison") %>%
+#   kable_classic_2(full_width = F)
+```
+
+```{r warning=FALSE}
+# glht(model_full, linfct = mcp(Layer = "Tukey"), test = adjusted("holm")) %>%
+#   glht.table() %>%
+#   kable(escape = F, digits = 3, caption = "Layers Comparison") %>%
+#   kable_classic_2(full_width = F)
+```
+
+```{r warning=FALSE}
+# model_df$IntTerm <- interaction(model_df$Group, model_df$Measurement)
+# lme(
+#   logRMS ~ IntTerm*Layer + OrderofClick,
+#   random = (~1|Animal/TrialNumber), data = model_df,
+#   control = lmeControl(opt = "optim")) %>%
+#   glht(linfct = mcp(IntTerm = "Tukey"), test = adjusted("holm")) %>%
+#   glht.table() %>%
+#   kable(escape = F, digits = 3, caption = "Group*Measurement Comparison") %>%
+#   kable_classic_2(full_width = F)
+```
+
+```{r warning=FALSE}
+# model_df$IntTerm <- interaction(model_df$Group, model_df$Layer)
+# lme(
+#   logRMS ~ IntTerm*Measurement + OrderofClick, 
+#   random = (~1|Animal/TrialNumber), data = model_df,
+#   control = lmeControl(opt = "optim")) %>% 
+#   glht(linfct = mcp(IntTerm = "Tukey"), test = adjusted("holm")) %>% 
+#   glht.table() %>% 
+#   kable(escape = F, digits = 3, caption = "Group*Layer Comparison") %>%
+#   kable_classic_2(full_width = F)
+```
+
+```{r warning=FALSE}
+# model_df$IntTerm <- interaction(model_df$Measurement, model_df$Layer)
+# lme(
+#   logRMS ~ IntTerm*Group + OrderofClick, 
+#   random = (~1|Animal/TrialNumber), data = model_df,
+#   control = lmeControl(opt = "optim")) %>% 
+#   glht(linfct = mcp(IntTerm = "Tukey"), test = adjusted("holm")) %>% 
+#   glht.table() %>% 
+#   kable(escape = F, digits = 3, caption = "Measurement*Layer Comparison") %>%
+#   kable_classic_2(full_width = F)
+```
+
+```{r warning=FALSE}
+# model_df$IntTerm <- interaction(model_df$Group, model_df$Measurement, model_df$Layer)
+# lme(
+#   logRMS ~ IntTerm + OrderofClick,
+#   random = (~1|Animal/TrialNumber), data = model_df,
+#   control = lmeControl(opt = "optim")) %>%
+#   glht(linfct = mcp(IntTerm = "Tukey"), test = adjusted("holm")) %>%
+#   glht.table() %>%
+#   kable(escape = F, digits = 3, caption = "Group*Measurement Comparison") %>%
+#   kable_classic_2(full_width = F)
+```
+
+
+## Model diagnostics
+
+### Random Intercepts
+
+```{r fig.width=8, fig.height=5}
+p1 <- ggplot(
+  data = data.frame(intercept = model_full$coefficients$random$Animal)) +
+  geom_histogram(
+    aes(x = X.Intercept.), bins = 25, 
+    fill = "lightblue", color = "black") +
+  labs(title = "Intercept by Animal")
+
+p2 <- ggplot(
+  data = data.frame(intercept = model_full$coefficients$random$Animal), 
+  aes(sample = X.Intercept.)) +
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title = "QQ Plot (Animal)")
+
+p3 <- ggplot(
+  data = data.frame(intercept = model_full$coefficients$random$TrialNumber)) +
+  geom_histogram(
+    aes(x = X.Intercept.), bins = 25, 
+    fill = "lightblue", color = "black") +
+  labs(title = "Intercept by Animal/TrialNumber")
+
+p4 <- ggplot(
+  data = data.frame(intercept = model_full$coefficients$random$TrialNumber), 
+  aes(sample = X.Intercept.)) +
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title = "QQ Plot (Animal/TrialNumber)")
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
+
+### Residuals Plots
+
+```{r fig.height=3, fig.width=8}
+res <- residuals(model_full)
+
+p1 <- ggplot(data = data.frame(residuals = res)) +
+  geom_histogram(aes(x = residuals), bins = 25, 
+                 fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Residuals")
+
+p2 <- ggplot(
+  data = data.frame(residuals = res), 
+  aes(sample = residuals)) +
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title = "QQ Plot of Residuals")
+
+grid.arrange(p1, p2, nrow = 1)
+```
+
+```{r fig.height=4, fig.width=8}
+p1 <- plot(model_full, resid(.) ~ fitted(.), abline=0, main = "All Data")
+p2 <- plot(model_full, resid(.) ~ fitted(.)|Animal, abline=0, main = "By Animal")
+
+grid.arrange(p1, p2, nrow = 1, widths = c(1.5,2))
+```
+
+## Effects
+
+```{r fig.height=4, fig.width=9}
+# p1 <- plot(Effect(c("Group"), model_full), multiline = TRUE)
+# p2 <- plot(Effect(c("Measurement"), model_full), multiline = TRUE)
+# p3 <- plot(Effect(c("Layer"), model_full), multiline = TRUE)
+# p4 <- plot(Effect(c("ClickFreq"), model_full), multiline = TRUE)
+plot(Effect(c("OrderofClick"), model_full), multiline = TRUE)
+```
+
+
+```{r fig.height=6, fig.width=9}
+# p1 <- plot(Effect(c("Group", "Measurement"), model_full), multiline = TRUE)
+# p2 <- plot(Effect(c("Measurement", "Layer"), model_full), multiline = TRUE)
+# p3 <- plot(Effect(c("Group", "Layer"), model_full), multiline = TRUE)
+# 
+# grid.arrange(p1, p2, p3, nrow = 2)
+```
+
+```{r fig.height=4, fig.width=9}
+# plot(Effect(c("Layer", "Group", "Measurement"), model_full), multiline = TRUE)
+```
+
+```{r fig.height=3, fig.width=9}
+emmip(model_full, formula = Group ~ Layer | Measurement) +
+  theme_minimal()
+```
+
+```{r fig.height=4, fig.width=9}
+emmip(model_full, formula = Group ~ Measurement | Layer) +
+  theme_minimal()
+```
+
+```{r fig.height=4, fig.width=9}
+emmip(model_full, formula = Measurement ~ Group | Layer) +
+  theme_minimal()
+```
+
+```{r fig.height=3, fig.width=9}
+emmip(model_full, formula = Layer ~ Measurement | Group) +
+  theme_minimal()
+```
+
+
+```{r fig.height=3, fig.width=9}
+emmip(model_full, formula = Layer ~ Group | Measurement) +
+  theme_minimal()
+```
+
+```{r fig.height=3, fig.width=9}
+emmip(model_full, formula = Measurement ~ Layer | Group) +
+  theme_minimal()
+```

@@ -1,5 +1,5 @@
 ---
-title: "Mixed ANOVA + Pairwise Comparison"
+title: "Mixed ANOVA + Pairwise Comparison (CL data)"
 date: "6/3/2021"
 output:
   html_document:
@@ -10,7 +10,7 @@ output:
     
 knit: 
     (function(input, ...) {
-        rmarkdown::render(input, output_file = "RAnova_AMST.html")
+        rmarkdown::render(input, output_file = "RAnova_main.html")
     })
 ---
 
@@ -41,17 +41,13 @@ knit:
 
 -   **Significant two-way interaction**. Can be used if an interaction term in Mixed ANOVA results showed significance. In other words, impact of `Group` on the outcome variable (`PeakAmp`, `PeakLat`, `RMS`) depends on the `Measurement` (and vice versa)
 
-    -   **Effect of `Group` at each `Measurement`**. Shows the **simple main effect** of the `Group`
-
     -   **Pairwise comparisons between `Group`**. Performs [Welch's t-tests](https://en.wikipedia.org/wiki/Welch%27s_t-test) (for unequal variances) for comparing `Group` for each `Measurement`
-
-    -   **Effect of `Measurement` at each level of `Group`**. Shows the **simple main effect** of the **`Measurement`**
 
     -   **Pairwise comparisons between `Measurement`**. Performs **paired** two-sample t-test for comparing `Measurement` for each `Group`.
 
 -   **Non-significant two-way interaction**. Shows the **main effect** for `Group` and `Measurement`. Used if there was non-significant two-way interaction.
 
-    For each table observations with adjusted p-value (using Bonferroni correction) which is less then 0.05 are marked green.
+    For each table observations with adjusted p-value (using Holm–Bonferroni method) which is less then 0.05 are marked green.
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -62,27 +58,30 @@ library(kableExtra)
 ```
 
 ```{r message=FALSE, warning=FALSE}
-raw_data <- read_csv("../../Data_new/AVRECPeakAMST.csv")
-data_type <- "AMST"
+data_type <- "CLST"
+raw_data <- read_csv(paste0("../../Data_new/AVRECPeak", data_type,".csv"))
 
 layers <- unique(raw_data$Layer)
 stimfreq <- unique(raw_data$ClickFreq)
-metrics <- c("PeakAmp", "PeakLat", "RMS")
+metrics <- c("PeakAmp", "PeakLat", "RMS", "logRMS")
+stimfreq <- c(5, 10)
+
 
 red_color <- "#ffb3b3"
 green_color <- "#d6f5d6"
 
 # values for testing
-freq <- 2
+# metrics <- c("RMS", "logRMS")
+freq <- 5
 layer <- "All"
-metric <- "PeakAmp"
+metric <- "logRMS"
 ```
 
 # Results {.tabset .tabset-fade .tabset-pills}
 
 ```{r message=FALSE, warning=FALSE, results='asis'}
 for (freq in stimfreq){
-# for (freq in c(2, 5)){
+
   cat("##", freq, "Hz Frequency {.tabset .tabset-fade .tabset-pills} \n")
   
   for (layer in layers){
@@ -93,39 +92,52 @@ for (freq in stimfreq){
       filter(
         ClickFreq == freq,
         Layer == layer,
-        OrderofClick == 1)
-    
+        OrderofClick == 1,
+        grepl('_1', Measurement),
+        PeakAmp > 0) %>% 
+      mutate(
+        logRMS = log(RMS),
+        Measurement = case_when(
+          grepl('pre', Measurement) ~ "preLaser",
+          TRUE ~ "postLaser"
+        )
+      ) %>% 
+      select(-c(Layer, ClickFreq, OrderofClick))
+  
+    # get average by Trial
     if(grepl("ST", data_type)){
-      model_data <- model_data %>% 
-        group_by(Group, Animal, Measurement) %>% 
+      model_data <- model_data %>%
+        group_by(Group, Animal, Measurement) %>%
         summarize(
           PeakAmp = mean(PeakAmp, na.rm = TRUE),
           PeakLat = mean(PeakLat, na.rm = TRUE),
-          RMS = mean(RMS, na.rm = TRUE)) %>% 
-        ungroup()
+          RMS = mean(RMS, na.rm = TRUE),
+          logRMS = mean(logRMS, na.rm = TRUE)) %>%
+        ungroup() %>% 
+        convert_as_factor(Group, Animal, Measurement) 
     }
     
-      model_data <- model_data %>% 
-        select(Group, Animal, Measurement, PeakAmp, PeakLat, RMS)
+    # if(grepl("ST", data_type)){
+    #   model_data <- model_data %>% 
+    #     mutate(Animal = paste0(Animal, "_", TrialNumber)) %>% 
+    #     select(-TrialNumber) %>% 
+    #     ungroup()
+    # }
+  
+    # exclude_animals <- model_data %>%
+    #   group_by(Animal, Layer) %>%
+    #   summarise(n = n_distinct(Measurement)) %>%
+    #   filter(n < 2) %>%
+    #   pull(Animal)
+    # 
+    # model_data <- model_data %>% 
+    #   filter(!(Animal %in% exclude_animals)) %>%
+    #   select(Group, Animal, Measurement, Layer, PeakAmp, PeakLat, RMS, logRMS) %>% 
+    #   convert_as_factor(Group, Animal, Measurement, Layer) 
     
-    if(grepl("CL", data_type)) {
-      model_data <- model_data %>% 
-      convert_as_factor(Group, Animal, Measurement) %>% 
-        reorder_levels(
-          Measurement, 
-          order = c("preCL_1", "CL_1", "CL_2", "CL_3", "CL_4"))
-    } else {
-      model_data <- model_data %>% 
-        filter(Measurement != "AM_5") %>% 
-        reorder_levels(
-          Measurement, 
-          order = c("preAM_1", "AM_1", "AM_2", "AM_3", "AM_4"))
-    }
-      
-      
       for (metric in metrics){
       # for (metric in c("PeakLat")){
-        
+
         cat("####", metric, "{.tabset .tabset-fade .tabset-pills}\n")
         
         cat("##### Assumptions Check\n")
@@ -152,7 +164,7 @@ for (freq in stimfreq){
         cat("\n\n<b>===NORMALITY ASSUMPTION===</b>\n\n")
         
         p <- ggqqplot(model_data, metric, ggtheme = theme_bw()) +
-          facet_grid(Measurement ~ Group)
+          facet_grid(Group ~ Measurement, labeller = "label_both")
         plot(p)
 
         cat("\n\n<b>===HOMOGENEITY OF VARIANCE ASSUMPTION===</b>\n\n")
@@ -177,13 +189,14 @@ for (freq in stimfreq){
         # Two-way mixed ANOVA test
         res.aov <- anova_test(
           data = model_data, dv = eval(metric), wid = Animal,
-          between = Group, within = Measurement)
+          between = Group, within = c(Measurement))
         
         df <- get_anova_table(res.aov) %>%
           data.frame()
         
         df %>% 
-          kable(escape = F) %>%
+          kable(escape = F,
+                caption = "Mixed ANOVA (Type III test)") %>%
           kable_classic_2(full_width = F) %>% 
           kable_styling() %>% 
           row_spec(
@@ -197,40 +210,46 @@ for (freq in stimfreq){
 
         cat("\n\n<b>===SIGNIFICANT TWO-WAY INTERACTION===</b>\n\n")
         
-        cat("\n\n\n<b>=EFFECT OF GROUP AT EACH MEASUREMENT=</b>\n\n")
-  
-        one.way <- model_data %>%
-          group_by(Measurement) %>%
-          anova_test(dv = eval(metric), wid = Animal, between = Group) %>%
-          get_anova_table() %>%
-          adjust_pvalue(method = "bonferroni")
+        # cat("\n\n\n<b>=EFFECT OF GROUP ON MEASUREMENT=</b>\n\n")
         
-        df <- one.way %>% 
-          data.frame() %>% 
-          select(-F)
-        df %>% 
-          kable(escape = F) %>%
-          kable_classic_2(full_width = F) %>% 
-          kable_styling() %>% 
-          row_spec(
-            which(df$p.adj <= 0.05), bold = T, 
-            background = green_color) %>% 
-          print()
+        # one.way <- model_data %>%
+        #   group_by(Group) %>%
+        #   anova_test(dv = eval(metric), wid = Animal, within = c(Measurement)) %>% 
+        #   get_anova_table() %>%
+        #   adjust_pvalue(method = "holm")
+  
+        # one.way <- model_data %>%
+        #   group_by(Measurement) %>%
+        #   anova_test(dv = eval(metric), wid = Animal, between = Group) %>%
+        #   get_anova_table() %>%
+        #   adjust_pvalue(method = "bonferroni")
+        
+        # df <- one.way %>% 
+        #   data.frame() %>% 
+        #   select(-F)
+        # df %>% 
+        #   kable(escape = F, digits = 4) %>%
+        #   kable_classic_2(full_width = F) %>% 
+        #   kable_styling() %>% 
+        #   row_spec(
+        #     which(df$p.adj <= 0.05), bold = T, 
+        #     background = green_color) %>% 
+        #   print()
         
         cat("\n\n\n<b>=PAIRWISE COMPARISONS BETWEEN GROUP LEVELS=</b>\n\n")
         
         pwc <- model_data %>%
           group_by(Measurement) %>%
           pairwise_t_test(
-            as.formula(paste0(metric, "~ Group")), 
-            p.adjust.method = "bonferroni",
+            as.formula(paste0(metric, "~ Group")),
+            p.adjust.method = "holm",
             pool.sd = FALSE,
             var.equal = FALSE)
-        
+
         eff_size <- model_data %>%
           group_by(Measurement) %>%
           cohens_d(
-            as.formula(paste0(metric, "~ Group")), 
+            as.formula(paste0(metric, "~ Group")),
             var.equal = FALSE)
         
         df <- pwc %>% 
@@ -246,46 +265,46 @@ for (freq in stimfreq){
             background = green_color) %>% 
           print()
         
-        cat("\n\n\n<b>=EFFECT OF MEASUREMENT AT EACH LEVEL OF GROUP=</b>\n\n")
-        
-        one.way2 <- model_data %>%
-          group_by(Group) %>%
-          anova_test(dv = eval(metric), wid = Animal, within = Measurement) %>%
-          get_anova_table() %>%
-          adjust_pvalue(method = "bonferroni")
-        
-        df <- one.way2 %>%
-          data.frame()
-        df %>% 
-          kable(escape = F) %>%
-          kable_classic_2(full_width = F) %>% 
-          kable_styling() %>% 
-          row_spec(
-            which(df$p.adj <= 0.05), bold = T, 
-            background = green_color) %>% 
-          print()
+        # cat("\n\n\n<b>=EFFECT OF MEASUREMENT AT EACH LEVEL OF GROUP=</b>\n\n")
+        # 
+        # one.way2 <- model_data %>%
+        #   group_by(Measurement) %>%
+        #   anova_test(dv = eval(metric), wid = Animal, between = Group) %>%
+        #   get_anova_table() %>%
+        #   adjust_pvalue(method = "holm")
+        # 
+        # df <- one.way2 %>%
+        #   data.frame()
+        # df %>% 
+        #   kable(escape = F) %>%
+        #   kable_classic_2(full_width = F) %>% 
+        #   kable_styling() %>% 
+        #   row_spec(
+        #     which(df$p.adj <= 0.05), bold = T, 
+        #     background = green_color) %>% 
+        #   print()
         
         cat("\n\n\n<b>=PAIRWISE COMPARISONS BETWEEN MEASUREMENTS AT EACH GROUP LEVELS=</b>\n\n")
         
-        exclude_animals <- model_data %>% 
-          group_by(Animal) %>% 
-          summarise(n = n_distinct(Measurement)) %>% 
-          filter(n < 5) %>% 
-          pull(Animal)
+        # exclude_animals <- model_data %>%
+        #   group_by(Animal) %>%
+        #   summarise(n = n_distinct(Measurement)) %>%
+        #   filter(n < 2) %>%
+        #   pull(Animal)
         
         pwc2 <- model_data %>%
-          filter(!(Animal %in% exclude_animals)) %>% 
+          # filter(!(Animal %in% exclude_animals)) %>%
           group_by(Group) %>%
           pairwise_t_test(
             as.formula(paste0(metric, "~ Measurement")), 
             paired = TRUE, 
             pool.sd = FALSE,
             var.equal = FALSE,
-            p.adjust.method = "bonferroni"
+            p.adjust.method = "holm"
           )
         
         eff_size2 <- model_data %>%
-          filter(!(Animal %in% exclude_animals)) %>% 
+          # filter(!(Animal %in% exclude_animals)) %>%
           group_by(Group) %>%
           cohens_d(
             as.formula(paste0(metric, "~ Measurement")), 
@@ -308,11 +327,11 @@ for (freq in stimfreq){
         cat("\n\n\n<b>=MAIN EFFECT OF MEASUREMENT=</b>\n\n")
         
         df <- model_data %>%
-          filter(!(Animal %in% exclude_animals)) %>% 
+          # filter(!(Animal %in% exclude_animals)) %>%
           pairwise_t_test(
             as.formula(paste0(metric, "~ Measurement")), 
             paired = TRUE, 
-            p.adjust.method = "bonferroni"
+            p.adjust.method = "holm"
           ) %>% 
           data.frame() 
     
@@ -330,7 +349,7 @@ for (freq in stimfreq){
         df <- model_data %>%
           pairwise_t_test(
             as.formula(paste0(metric, "~ Group")), 
-            p.adjust.method = "bonferroni"
+            p.adjust.method = "holm"
           ) %>% 
           data.frame() 
         
@@ -352,12 +371,14 @@ for (freq in stimfreq){
         
         box_plot <- ggboxplot(
           model_data, x = "Measurement", y = metric,
-          color = "Group", palette = "jco"
+          color = "Group", palette = "jco",
+          add = "jitter"
         )
         
         box_plot2 <- ggboxplot(
-          model_data, x = "Group", y = metric,
-          color = "Measurement", palette = "jco"
+          model_data, x = "Group", y = metric, 
+          color = "Measurement", palette = "jco",
+          add = "jitter"
         )
         
         p <- box_plot + 
@@ -394,5 +415,124 @@ for (freq in stimfreq){
 }
 ```
 
+```{r}
+anova_test(
+          data = model_data, dv = logRMS, wid = Animal,
+          between = Group, within = Measurement, type = "II")
+```
+
+```{r}
+library(nlme)
+
+test <- lme(fixed = logRMS ~ Group*Measurement,
+            random = ~1|Animal/Measurement,
+            data = model_data)
+anova(test, type = "sequential")
+```
+
+```{r}
+library(gridExtra)
+p1 <- plot(test, resid(.) ~ fitted(.), abline=0, main = "All Data")
+p2 <- plot(test, resid(.) ~ fitted(.)|Group, abline=0, main = "By Animal")
+
+grid.arrange(p1, p2, nrow = 1, widths = c(1.5,2))
+```
 
 
+```{r eval=FALSE, include=FALSE}
+library(emmeans)
+emmip(test, formula = Group ~ Measurement) +
+        theme_minimal()
+
+```
+
+```{r}
+pairs(emmeans(test, ~ Group | Measurement))
+```
+
+```{r}
+model_data %>%
+  # filter(!(Animal %in% exclude_animals)) %>%
+  group_by(Measurement) %>%
+  pairwise_t_test(
+    as.formula(paste0(metric, "~ Group"))
+  )
+```
+
+
+```{r}
+model_data %>% 
+  group_by(Group, Measurement) %>% 
+  summarise(mean(logRMS))
+```
+
+```{r}
+
+```
+
+
+```{r}
+pairs(lsmeans(test, ~ Group | Measurement))
+```
+
+```{r}
+model_data <- raw_data %>% 
+      filter(
+        ClickFreq == freq,
+        Layer == "V",
+        OrderofClick == 1,
+        grepl('_1', Measurement),
+        PeakAmp > 0) %>% 
+      mutate(
+        logRMS = log(RMS),
+        Measurement = case_when(
+          grepl('pre', Measurement) ~ "preLaser",
+          TRUE ~ "postLaser"
+        )
+      ) %>% 
+      select(-c(Layer, ClickFreq, OrderofClick))
+  
+    # get average by Trial
+    if(grepl("ST", data_type)){
+      model_data <- model_data %>%
+        group_by(Group, Animal, Measurement) %>%
+        summarize(
+          PeakAmp = mean(PeakAmp, na.rm = TRUE),
+          PeakLat = mean(PeakLat, na.rm = TRUE),
+          RMS = mean(RMS, na.rm = TRUE),
+          logRMS = mean(logRMS, na.rm = TRUE)) %>%
+        ungroup() %>% 
+        convert_as_factor(Group, Animal, Measurement) 
+    }
+
+ggboxplot(
+          model_data, x = "Group", y = "RMS",
+          color = "Measurement", palette = "jco",
+          add = "mean", ylim = c(0,0.005)
+        )
+```
+
+```{r}
+model_data <- raw_data %>% 
+      filter(
+        ClickFreq == freq,
+        Layer == "V",
+        OrderofClick == 1,
+        grepl('_1', Measurement),
+        PeakAmp > 0) %>% 
+      mutate(
+        logRMS = log(RMS),
+        Measurement = case_when(
+          grepl('pre', Measurement) ~ "preLaser",
+          TRUE ~ "postLaser"
+        )
+      ) %>% 
+      select(-c(Layer, ClickFreq, OrderofClick))
+  
+
+ggboxplot(
+          model_data, x = "Group", y = "RMS",
+          color = "Measurement", palette = "jco",
+          add = "mean", ylim = c(0,0.005)
+        )
+```
