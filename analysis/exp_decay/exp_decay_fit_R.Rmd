@@ -1,5 +1,7 @@
 ---
-title: "Exponential Decay Model Fit"
+title: "Clustering voltage-gated calcium channels in the auditory cortex suppresses impulse response"
+author: "Katrina Deane, Ruslan Klymentiev"
+subtitle: "Exponential Decay Model Fit (CL data)"
 output:
   html_document:
     toc: true
@@ -38,21 +40,11 @@ exp_model_fit <- function(df, group, msrmt){
   
   model <- nls(PeakAmp ~ alpha * exp(beta * OrderofClick) + theta , data = df, start = start)
   return(model)
-  # x_temp <- seq(1,5,0.05)
-  # plot(df$OrderofClick, df$PeakAmp)
-  # lines(x_temp, predict(model, list(OrderofClick = x_temp)), col = 'skyblue', lwd = 3)
-  # 
-  # summary(model)
-  # 
-  # overview(model)
-  # 
-  # mod.res <- nlsResiduals(model)
-  # plot(mod.res)
 }
 ```
 
 ```{r message=FALSE, warning=FALSE}
-AVRECPeakCLST <- read_csv('../../Data_new/AVRECPeakCL.csv')
+AVRECPeakCLST <- read_csv('../../Data/AVRECPeakCL.csv')
 ```
 
 ```{r message=FALSE, warning=FALSE}
@@ -147,87 +139,4 @@ for(group in c("KIC", "KIT", "KIV")){
 l
 ```
 
-
-```{r}
-group <- "KIT"
-msrmt <- "preLaser"
-m <- exp_model_fit(df = model_data, group = group, msrmt = msrmt)
-
-logLik(m)
-```
-
-```{r}
-exp_model_fit2 <- function(df){
-
-  theta.0 <- min(df$PeakAmp) * 0.5  
-
-  # Estimate the rest parameters using a linear model
-  model.0 <- lm(log(PeakAmp - theta.0) ~ OrderofClick, data=df)  
-  alpha.0 <- exp(coef(model.0)[1])
-  beta.0 <- coef(model.0)[2]
-  
-  start <- list(
-    alpha = alpha.0, 
-    beta = beta.0,
-    theta = theta.0)
-  
-  model <- nls(PeakAmp ~ alpha * exp(beta * OrderofClick) + theta , data = df, start = start)
-  return(model)
-}
-```
-
-```{r}
-all_data_model <- model_data %>% 
-  filter(Group == "KIT") %>% 
-  exp_model_fit2()
-
-beta_all <- summary(all_data_model)$parameters[2, 1]
-```
-
-```{r}
-post_model <- model_data %>% 
-  filter(Group == "KIT", Measurement == "postLaser") %>% 
-  exp_model_fit2()
-
-summary(post_model)
-```
-
-```{r}
-data.frame(
-        OrderofClick = seq(1,5,0.05), 
-        Measurement = "postLaser") %>% 
-        mutate(PeakAmp = predict(post_model, list(OrderofClick = OrderofClick))) %>% 
-  ggplot() +
-  geom_line(aes(x = OrderofClick, y = PeakAmp))
-```
-
-```{r}
-post_model_self <- model_data %>% 
-  filter(Group == "KIT", Measurement == "postLaser") %>% 
-  exp_model_fit2()
-
-summary(post_model_self)
-```
-
-```{r}
-data.frame(
-        OrderofClick = seq(1,5,0.05), 
-        Measurement = "postLaser") %>% 
-        mutate(
-          PeakAmp_self = predict(post_model_self, list(OrderofClick = OrderofClick)),
-          PeakAmp = predict(post_model, list(OrderofClick = OrderofClick))) %>% 
-  ggplot(aes(x = OrderofClick)) +
-  geom_line(aes(y = PeakAmp), color = "blue") +
-  geom_line(aes(y = PeakAmp_self))
-```
-
-
-```{r}
-anova(post_model, post_model_self)
-```
-
-```{r}
-AIC(post_model)
-AIC(post_model_self)
-```
 

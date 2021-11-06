@@ -43,7 +43,7 @@ library(effectsize)
 data_type <- "AMST"
 raw_data <- read_csv(
   # path to the file
-  paste0("../../Data_new/AVRECPeak", data_type,".csv"),
+  paste0("../../Data/AVRECPeak", data_type,".csv"),
   col_types = cols(
     RMS = col_double(),
     PeakAmp = col_double(),

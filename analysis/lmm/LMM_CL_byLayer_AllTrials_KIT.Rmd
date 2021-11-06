@@ -43,7 +43,7 @@ library(effectsize)
 data_type <- "CLST"
 raw_data <- read_csv(
   # path to the file
-  paste0("../../Data_new/AVRECPeak", data_type,".csv"),
+  paste0("../../Data/AVRECPeak", data_type,".csv"),
   col_types = cols(
     RMS = col_double(),
     PeakAmp = col_double(),
@@ -187,6 +187,7 @@ for (freq in stimfreq){
       # 
       # cat('\n\n')
       
+      # for some reason model cannot convert for this subset of data
       if (freq == "10" && layer == "I_II" && metric == "logRMS") {
         next
       }
