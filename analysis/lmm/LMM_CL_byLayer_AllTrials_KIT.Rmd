@@ -1,0 +1,282 @@
+---
+title: "Clustering voltage-gated calcium channels in the auditory cortex suppresses impulse response"
+author: "Katrina Deane, Ruslan Klymentiev"
+subtitle: "Linear Mixed Models. CL Data."
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    df_print: paged
+    theme: journal
+    code_folding: hide
+---
+
+# Pre-processing
+
+* Just 1-st click measurements (`OrderofClick` = 1);
+* `Measurement` consists of two factors - one set of recordings **before** the laser and one set of recordings **after** the laser;
+* All trials were included.
+
+# Model
+
+`[Metric] ~ Group * Measurement + (1|Animal/TrialNumber)`
+
+**Baseline (intercept): `Group` = "KIT" & `Measurement` = "postLaser"**
+
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
+library(knitr)
+library(kableExtra)
+library(nlme)
+library(emmeans)
+library(standardize)
+library(sjPlot)
+library(gridExtra)
+library(effectsize)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+data_type <- "CLST"
+raw_data <- read_csv(
+  # path to the file
+  paste0("../../Data/AVRECPeak", data_type,".csv"),
+  col_types = cols(
+    RMS = col_double(),
+    PeakAmp = col_double(),
+    PeakLat = col_double()))
+
+layers <- unique(raw_data$Layer)
+metrics <- c("RMS", "PeakAmp", "PeakLat", "logRMS", "logPeakAmp", "logPeakLat")
+stimfreq <- c(5, 10)
+
+red_color <- "#ffb3b3"
+green_color <- "#d6f5d6"
+
+# # values for testing
+# layer <- "All"
+# freq <- 5
+# metric <- "logRMS"
+```
+
+
+```{r}
+all_data <- raw_data %>% 
+  filter(
+    OrderofClick == 1, # just 1st click
+    grepl('_1', Measurement), # pre/post Laser
+    PeakAmp > 0 # remove NAs
+  ) %>% 
+  mutate(
+    Measurement = case_when(
+      grepl('pre', Measurement) ~ "preLaser",
+      TRUE ~ "postLaser"),
+    Measurement = factor(Measurement, levels = c("postLaser", "preLaser")),
+    Animal = factor(Animal),
+    TrialNumber = factor(TrialNumber),
+    Group = factor(Group, levels = c("KIT", "KIC", "KIV")),
+    logRMS = log(RMS),
+    logPeakAmp = log(PeakAmp),
+    logPeakLat = log(PeakLat)
+  )
+```
+
+
+# Results {.tabset .tabset-fade .tabset-pills}
+
+```{r message=FALSE, warning=FALSE, results='asis'}
+for (freq in stimfreq){
+
+  cat("##", freq, "Hz Frequency {.tabset .tabset-fade .tabset-pills} \n")
+  
+  cat('\n\n')
+  
+  for(layer in layers){
+
+    cat("###", layer, "Layer {.tabset .tabset-fade .tabset-pills} \n")
+    
+    # final data set for the model fitting
+    model_data <- all_data %>% 
+      filter(ClickFreq == freq,
+             Layer == layer)
+    
+    for(metric in metrics){
+
+      cat("####", metric, "{.tabset .tabset-fade .tabset-pills} \n")
+      
+      cat("##### Data overview\n")
+      
+      cat('\n\n')
+      
+      model_data %>% 
+        select(-c(OrderofClick, Layer, ClickFreq)) %>% 
+        sample_n(5) %>% 
+        kable(escape = F, digits = 6,
+            caption = "Sample of the data") %>%
+        kable_classic_2(full_width = F) %>% 
+        kable_styling() %>% 
+        print()
+      
+      cat('\n\n')
+      
+      # plots with data overview
+      box_plot <- ggboxplot(
+        model_data, x = "Group", y = metric,
+        color = "Measurement", palette = "lancet", 
+        add = "jitter",
+        main = paste0(metric, " ~ Group | Measurement")
+      )
+      plot(box_plot)
+      
+      box_plot2 <- ggboxplot(
+        model_data, x = "Measurement", y = metric,
+        color = "Group", palette = "jco", 
+        add = "jitter",
+        main = paste0(metric, " ~ Measurement | Group")
+      )
+      plot(box_plot2)
+      
+      cat('\n\n')
+      
+      # cat("##### Assumption check\n")
+      # 
+      # cat("<b>===OUTLIERS===</b>\n\n")
+      # 
+      # df <- model_data %>%
+      #   group_by(Measurement, Group) %>%
+      #   identify_outliers(eval(metric))
+      # 
+      # if(nrow(df) > 0){
+      #   df %>%
+      #   kable(escape = F, digits = 6,
+      #         caption = "Outliers") %>%
+      #   kable_classic_2(full_width = F) %>%
+      #   kable_styling() %>%
+      #   row_spec(
+      #     which(df$is.extreme == TRUE), bold = T,
+      #     background = red_color) %>%
+      #   print()
+      # } else{
+      #   cat("\n\nNo outliers were detected.\n\n")
+      # }
+      # 
+      # cat("\n\n<b>===NORMALITY ASSUMPTION===</b>\n\n")
+      # 
+      # p <- ggqqplot(model_data, metric, ggtheme = theme_bw()) +
+      #   facet_grid(Group ~ Measurement, labeller = "label_both")
+      # plot(p)
+      # 
+      # cat("\n\n<b>===HOMOGENEITY OF VARIANCE ASSUMPTION===</b>\n\n")
+      # 
+      # df <- model_data %>%
+      #     group_by(Measurement) %>%
+      #     levene_test(formula = as.formula(paste0(metric, "~ Group")))
+      # 
+      # df %>%
+      #   kable(escape = F, digits = 3,
+      #         caption = "Levene test (equality of variances)") %>%
+      #   kable_classic_2(full_width = F) %>%
+      #   kable_styling() %>%
+      #   row_spec(
+      #     which(df$p <= 0.05), bold = T,
+      #     background = red_color) %>%
+      #   print()
+      # 
+      # cat('\n\n')
+      
+      # for some reason model cannot convert for this subset of data
+      if (freq == "10" && layer == "I_II" && metric == "logRMS") {
+        next
+      }
+      
+      cat("##### LMM\n")
+      
+      model_final <- lme(
+        fixed = as.formula(paste0(metric, "~ Group*Measurement")),
+        random = (~1|Animal/TrialNumber),
+        data = model_data, control = lmeControl(maxIter = 1e8, msMaxIter = 1e8))
+      
+      cat(paste0("`", ". ", capture.output(summary(model_final)), "`  \n"))
+      
+      cat('\n\n')
+      
+      cat("##### Residuals check\n")
+      
+      res <- residuals(model_final)
+      
+      p1 <- ggplot(data = data.frame(residuals = res)) +
+        geom_histogram(aes(x = residuals), bins = 25,
+                       fill = "lightblue", color = "black") +
+        labs(title = "Histogram of Residuals")
+      
+      p2 <- ggplot(
+        data = data.frame(residuals = res),
+        aes(sample = residuals)) +
+        stat_qq() +
+        stat_qq_line() +
+        labs(title = "QQ Plot of Residuals")
+      
+      grid.arrange(p1, p2, nrow = 1)
+      
+      p1 <- plot(model_final, resid(.) ~ fitted(.), abline=0, main = "All Data")
+      p2 <- plot(model_final, resid(.) ~ fitted(.)|Animal, abline=0, main = "By Animal")
+      
+      grid.arrange(p1, p2, nrow = 1, widths = c(1.5,2))
+      
+      cat('\n\n')
+      
+      cat("##### Effects\n")
+      
+      p1 <- emmip(model_final, formula = Group ~ Measurement, ) +
+        theme(aspect.ratio = 1)
+      
+      p2 <- emmip(model_final, formula = Measurement ~ Group) +
+        theme(aspect.ratio = 1)
+      
+      grid.arrange(p1, p2, nrow = 1)
+      
+      cat('\n\n')
+      
+      cat("##### Post-hoc tests\n")
+      
+      grp_eff <- pairs(emmeans(model_final, ~ Group | Measurement))
+      msrmnt_eff <- pairs(emmeans(model_final, ~ Measurement | Group))
+      df1 <- rbind(grp_eff, msrmnt_eff, adjust = "none") %>% 
+        data.frame()
+      
+      df2 <- rbind(grp_eff, msrmnt_eff, adjust = "holm") %>% 
+        data.frame() %>% 
+        mutate(p.value.adj = p.value) %>% 
+        select(-p.value)
+      
+      df <- df1 %>% 
+        left_join(df2)
+      
+      df <- df %>% bind_cols(
+        t_to_d(t = df$t.ratio, df_error = df$df) %>%
+          data.frame() %>%
+          round(2) %>%
+          dplyr::select(d)) %>%
+        mutate(eff_size = interpret_d(d)) %>%
+        dplyr::select(-c(df))
+      
+      df %>%
+        kable(escape = F, digits = 4, caption = "Multiple Comparisons") %>%
+        kable_classic_2(full_width = F) %>%
+        footnote(general = "P value adjustment: holm method for 9 tests") %>%
+        kable_styling() %>%
+        row_spec(
+          which(df$p.value.adj < 0.05), bold = T,
+          background = "#d6f5d6") %>% 
+        print()
+      
+      cat('\n\n')
+    }
+    cat('\n\n')
+  }
+}
+```
+

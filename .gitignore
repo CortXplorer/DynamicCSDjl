@@ -13,3 +13,4 @@
 *.png
 
 ShortenData.jl
+.Rproj.user

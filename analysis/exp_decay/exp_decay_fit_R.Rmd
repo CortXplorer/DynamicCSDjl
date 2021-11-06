@@ -1,0 +1,142 @@
+---
+title: "Clustering voltage-gated calcium channels in the auditory cortex suppresses impulse response"
+author: "Katrina Deane, Ruslan Klymentiev"
+subtitle: "Exponential Decay Model Fit (CL data)"
+output:
+  html_document:
+    toc: true
+    df_print: paged
+    theme: journal
+    code_folding: hide
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
+library(knitr)
+library(kableExtra)
+library(gridExtra)
+library(nlstools)
+library(plotly)
+library(htmltools)
+```
+
+```{r}
+exp_model_fit <- function(df, group, msrmt){
+  df <- df %>% 
+  filter(
+    Measurement == msrmt,
+    Group == group)
+
+  theta.0 <- min(df$PeakAmp) * 0.5  
+
+  # Estimate the rest parameters using a linear model
+  model.0 <- lm(log(PeakAmp - theta.0) ~ OrderofClick, data=df)  
+  alpha.0 <- exp(coef(model.0)[1])
+  beta.0 <- coef(model.0)[2]
+  
+  start <- list(alpha = alpha.0, beta = beta.0, theta = theta.0)
+  
+  model <- nls(PeakAmp ~ alpha * exp(beta * OrderofClick) + theta , data = df, start = start)
+  return(model)
+}
+```
+
+```{r message=FALSE, warning=FALSE}
+AVRECPeakCLST <- read_csv('../../Data/AVRECPeakCL.csv')
+```
+
+```{r message=FALSE, warning=FALSE}
+model_data <- AVRECPeakCLST %>% 
+    filter(
+        Measurement %in% c("preCL_1", "CL_1", "CL_2"),
+        ClickFreq == 5,
+        Layer == "All") %>%
+    ungroup() %>% 
+    mutate(
+        Measurement = case_when(
+        Measurement == "preCL_1" ~ "preLaser",
+        TRUE ~ "postLaser"
+    )) %>% 
+    group_by(Group, Animal, OrderofClick, Measurement) %>% 
+    summarize(PeakAmp = mean(PeakAmp, na.rm = TRUE)) %>% 
+    # group_by(Group, OrderofClick, Measurement) %>% 
+    # summarize(PeakAmp = mean(PeakAmp, na.rm = TRUE)) %>% 
+    ungroup()
+```
+
+# Model Fit {.tabset .tabset-fade .tabset-pills}
+
+```{r message=FALSE, warning=FALSE, results='asis'}
+l <- htmltools::tagList()
+i <- 1
+for(group in c("KIC", "KIT", "KIV")){
+  # group <- "KIT"
+  
+  cat("##", group)
+  cat("\n\n")
+  
+  models <- list()
+  for(msrmt in c("preLaser", "postLaser")) {
+    models[[msrmt]] <- exp_model_fit(df = model_data, group = group, msrmt = msrmt)
+  }
+  
+  summary(models$preLaser)$parameters %>% 
+    kable(caption = "Pre-laser", full_width = F, digits = 3, escape = F) %>% 
+    kable_classic_2(full_width = F) %>% 
+    kable_styling() %>% 
+    print()
+  
+  summary(models$postLaser)$parameters %>% 
+    kable(caption = "Post-laser", full_width = F, digits = 3, escape = F) %>% 
+    kable_classic_2(full_width = F) %>% 
+    kable_styling() %>% 
+    print()
+  
+  cat("\n\n")
+  
+  predicted_data <- data.frame(
+    OrderofClick = seq(1,5,0.05), 
+    Measurement = "preLaser") %>% 
+    mutate(PeakAmp = predict(models$preLaser, list(OrderofClick = OrderofClick))) %>% 
+    bind_rows(
+      data.frame(
+        OrderofClick = seq(1,5,0.05), 
+        Measurement = "postLaser") %>% 
+        mutate(PeakAmp = predict(models$postLaser, list(OrderofClick = OrderofClick)))
+    )
+    
+  l[[i]] <- predicted_data %>% 
+    plot_ly(
+       x = ~OrderofClick, y = ~PeakAmp,
+      color = ~Measurement,
+      type = 'scatter', mode = 'lines',
+      hovertemplate = paste(
+        '<b>Fitted Data</b>',
+        '<br><i>OrderofClick</i>: %{x}',
+        '<br><i>PeakAmp</i>: %{y:.4f}')
+    ) %>% 
+    add_markers(
+      data = model_data %>% filter(Group == group), hovertemplate = paste(
+        '<b>Actual Data</b>',
+        '<br><i>OrderofClick</i>: %{x}',
+        '<br><i>PeakAmp</i>: %{y:.4f}')) %>% 
+    layout(
+      title = paste0("<b>Exponential Decay Model (", group, ")</b>"),
+      xaxis = list(title = "<b>Order of Click</b>"),
+      yaxis = list(title = "<b>Peak Amplitude</b>"),
+      margin = list(t = 70))
+  
+  cat("\n\n")
+  i <- i+1
+}
+```
+
+## Plots
+
+```{r message=FALSE, warning=FALSE}
+l
+```
+
+
