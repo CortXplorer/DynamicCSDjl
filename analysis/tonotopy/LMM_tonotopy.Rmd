@@ -1,0 +1,416 @@
+---
+title: "Clustering voltage-gated calcium channels in the auditory cortex suppresses impulse response"
+author: "Katrina Deane, Ruslan Klymentiev"
+subtitle: "Linear Mixed Models. Tonotopy Analysis"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    df_print: paged
+    theme: journal
+    code_folding: hide
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
+library(knitr)
+library(kableExtra)
+library(nlme)
+library(emmeans)
+library(standardize)
+library(sjPlot)
+library(gridExtra)
+library(effectsize)
+```
+
+# Data Import
+
+```{r}
+raw_data <- read_csv(
+  file = "../../Data/TonoRMS.csv",
+  # specify data types of colums for later use
+  col_types = cols(
+    AVRECrms = col_double(),
+    AVRECamp = col_double(),
+    LIVrms = col_double(),
+    LIVamp = col_double())
+)
+
+model_data <- raw_data
+# new column with combined Measurememnts
+model_data$combMeasurement <- "na"
+```
+
+# Data Cleaning
+
+```{r}
+# combine trials for post surgery for animals KIV03, KIT09
+special_animals <- c("KIV03", "KIT09", "KIV16")
+
+# select max trial from the first period
+max_trials <- model_data %>% 
+  filter(
+    Animal %in% special_animals,
+    Measurement == "Pre_6") %>% 
+  group_by(Animal) %>% 
+  summarise(max_trial = max(Trial))
+
+# add max trial from the first period to the trials in the second period
+for(animal in unique(max_trials$Animal)){
+  model_data[(model_data$Animal == animal) & (model_data$Measurement == "Pre_7"), "Trial"] = model_data[(model_data$Animal == animal) & (model_data$Measurement == "Pre_7"), "Trial"] + max_trials[max_trials$Animal == animal, "max_trial"] %>% as.integer()
+}
+
+# create a new label of combined Measurement
+model_data <- model_data %>% 
+  mutate(combMeasurement = if_else(
+    condition = (Animal %in% special_animals) & (Measurement %in% c("Pre_6", "Pre_7")), 
+    true = "postSurgery",
+    false = combMeasurement))
+```
+
+```{r}
+# combine trials for post surgery for all other animals
+max_trials <- model_data %>% 
+  filter(
+    !(Animal %in% special_animals),
+    Measurement == "Pre_2") %>% 
+  group_by(Animal) %>% 
+  summarise(max_trial = max(Trial))
+
+for(animal in unique(max_trials$Animal)){
+  model_data[(model_data$Animal == animal) & (model_data$Measurement == "Pre_3"), "Trial"] = model_data[(model_data$Animal == animal) & (model_data$Measurement == "Pre_3"), "Trial"] + max_trials[max_trials$Animal == animal, "max_trial"] %>% as.integer()
+}
+
+model_data <- model_data %>% 
+  mutate(combMeasurement = if_else(
+    condition = !(Animal %in% special_animals) & (Measurement %in% c("Pre_2", "Pre_3")), 
+    true = "postSurgery",
+    false = combMeasurement))
+  
+```
+
+```{r}
+# combine trials for all animals for pre laser
+max_trials <- model_data %>% 
+  filter(
+    Measurement == "preCLtono_3") %>% 
+  group_by(Animal) %>% 
+  summarise(max_trial = max(Trial))
+
+for(animal in unique(max_trials$Animal)){
+  model_data[(model_data$Animal == animal) & (model_data$Measurement == "preCLtono_4"), "Trial"] = model_data[(model_data$Animal == animal) & (model_data$Measurement == "preCLtono_4"), "Trial"] + max_trials[max_trials$Animal == animal, "max_trial"] %>% as.integer()
+}
+
+model_data <- model_data %>% 
+  mutate(combMeasurement = if_else(
+    condition = Measurement %in% c("preCLtono_3", "preCLtono_4"), 
+    true = "preLaser",
+    false = combMeasurement))
+```
+
+```{r}
+# combine trials for all animals for post laser
+max_trials <- model_data %>% 
+  filter(
+    Measurement == "CLtono_1") %>% 
+  group_by(Animal) %>% 
+  summarise(max_trial = max(Trial))
+
+for(animal in unique(max_trials$Animal)){
+  model_data[(model_data$Animal == animal) & (model_data$Measurement == "AMtono_1"), "Trial"] = model_data[(model_data$Animal == animal) & (model_data$Measurement == "AMtono_1"), "Trial"] + max_trials[max_trials$Animal == animal, "max_trial"] %>% as.integer()
+}
+
+model_data <- model_data %>% 
+  mutate(combMeasurement = if_else(
+    condition = Measurement %in% c("CLtono_1", "AMtono_1"), 
+    true = "postLaser",
+    false = combMeasurement))
+```
+
+```{r}
+# combine trials for baseline except special animals
+max_trials <- model_data %>% 
+  filter(
+    !(Animal %in% special_animals),
+    Measurement == "Pre_7") %>% 
+  group_by(Animal) %>% 
+  summarise(max_trial = max(Trial))
+
+for(animal in unique(max_trials$Animal)){
+  model_data[(model_data$Animal == animal) & (model_data$Measurement == "Pre_8"), "Trial"] = model_data[(model_data$Animal == animal) & (model_data$Measurement == "Pre_8"), "Trial"] + max_trials[max_trials$Animal == animal, "max_trial"] %>% as.integer()
+}
+
+model_data <- model_data %>% 
+  mutate(combMeasurement = if_else(
+    condition = !(Animal %in% special_animals) & (Measurement %in% c("Pre_7", "Pre_8")), 
+    true = "Baseline",
+    false = combMeasurement))
+```
+
+
+```{r}
+#  baseline for special animals
+model_data <- model_data %>% 
+  mutate(combMeasurement = if_else(
+    condition = (Animal %in% special_animals) & (Measurement  == "Pre_8"), 
+    true = "Baseline",
+    false = combMeasurement))
+```
+
+```{r}
+# select only relevant columns
+model_data <- model_data %>% 
+  filter(combMeasurement %in% c("postSurgery", "Baseline", "preLaser", "postLaser")) %>%
+  select(Group, Animal, Trial, combMeasurement, AVRECrms, AVRECamp, LIVrms, LIVamp)
+```
+
+# Modelling {.tabset .tabset-fade .tabset-pills}
+
+## AVREC logRMS {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+avrec_data <- model_data %>% 
+  filter(!is.na(AVRECamp)) %>% # only those trials where Amplitude was detected
+  mutate(
+    combMeasurement = factor(
+      combMeasurement, 
+      levels = c("postSurgery", "Baseline", "preLaser", "postLaser")),
+    Group = factor(
+      Group, 
+      levels = c("KIT", "KIC", "KIV")),
+    # Trial = factor(Trial),
+    Animal = factor(Animal),
+    logAVRECrms = log(AVRECrms)
+  )
+```
+
+### Overview of the Data
+
+```{r}
+ggboxplot(
+  avrec_data, x = "combMeasurement", y = "logAVRECrms",
+  color = "Group", palette = "lancet", 
+  add = "jitter",
+  main = "logAVRECrms ~ Group | Measurement"
+)
+```
+
+```{r}
+ggboxplot(
+  avrec_data, x = "combMeasurement", y = "AVRECrms",
+  color = "Group", palette = "lancet", 
+  add = "jitter",
+  main = "AVRECrms ~ Group | Measurement"
+)
+```
+
+### LMM
+
+```{r}
+model_final <- lme(
+    fixed = logAVRECrms ~ Group*combMeasurement,
+    random = (~1|Animal/Trial),
+    data = avrec_data)
+```
+
+```{r}
+tab_model(model_final)
+```
+
+### Residuals Check
+
+```{r}
+res <- residuals(model_final)
+      
+p1 <- ggplot(data = data.frame(residuals = res)) +
+  geom_histogram(aes(x = residuals), bins = 25,
+                 fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Residuals")
+
+p2 <- ggplot(
+  data = data.frame(residuals = res),
+  aes(sample = residuals)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = "QQ Plot of Residuals")
+
+grid.arrange(p1, p2, nrow = 1)
+
+p1 <- plot(model_final, resid(.) ~ fitted(.), abline=0, main = "All Data")
+p2 <- plot(model_final, resid(.) ~ fitted(.)|Animal, abline=0, main = "By Animal")
+
+grid.arrange(p1, p2, nrow = 1, widths = c(1.5,2))
+```
+
+### Effects
+
+```{r}
+emmip(model_final, formula = Group ~ combMeasurement) +
+  theme(aspect.ratio = 0.5)
+
+emmip(model_final, formula = combMeasurement ~ Group) +
+  theme(aspect.ratio = 0.5)
+
+# grid.arrange(p1, p2, nrow = 2)
+```
+
+### Post-hoc tests
+
+```{r message=FALSE, warning=FALSE}
+grp_eff <- pairs(emmeans(model_final, ~ Group | combMeasurement))
+msrmnt_eff <- pairs(emmeans(model_final, ~ combMeasurement | Group))
+df1 <- rbind(grp_eff, msrmnt_eff, adjust = "none") %>% 
+  data.frame()
+
+df2 <- rbind(grp_eff, msrmnt_eff, adjust = "holm") %>% 
+  data.frame() %>% 
+  mutate(p.value.adj = p.value) %>% 
+  select(-p.value)
+      
+df <- df1 %>% 
+  left_join(df2)
+
+df <- df %>% bind_cols(
+  t_to_d(t = df$t.ratio, df_error = df$df) %>%
+    data.frame() %>%
+    round(2) %>%
+    dplyr::select(d)) %>%
+  mutate(eff_size = interpret_d(d)) %>%
+  dplyr::select(-c(df))
+
+df %>%
+  kable(escape = F, digits = 4, caption = "Multiple Comparisons") %>%
+  kable_classic_2(full_width = F) %>%
+  footnote(general = "P value adjustment: holm method for 30 tests") %>%
+  kable_styling() %>%
+  row_spec(
+    which(df$p.value.adj < 0.05), bold = T,
+    background = "#d6f5d6")
+```
+
+## Layer IV logRMS {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+liv_data <- model_data %>% 
+  filter(!is.na(LIVamp)) %>% # only those trials where Amplitude was detected
+  mutate(
+    combMeasurement = factor(
+      combMeasurement, 
+      levels = c("postSurgery", "Baseline", "preLaser", "postLaser")),
+    Group = factor(
+      Group, 
+      levels = c("KIT", "KIC", "KIV")),
+    Trial = factor(Trial),
+    Animal = factor(Animal),
+    logLIVrms = log(LIVrms)
+  )
+```
+
+### Overview of the Data
+
+```{r}
+ggboxplot(
+  liv_data, x = "combMeasurement", y = "logLIVrms",
+  color = "Group", palette = "lancet", 
+  add = "jitter",
+  main = "logLIVrms ~ Group | Measurement"
+)
+```
+
+```{r}
+ggboxplot(
+  liv_data, x = "combMeasurement", y = "LIVrms",
+  color = "Group", palette = "lancet", 
+  add = "jitter",
+  main = "LIVrms ~ Group | Measurement"
+)
+```
+
+### LMM
+
+```{r}
+model_final <- lme(
+    fixed = logLIVrms ~ Group*combMeasurement,
+    random = (~1|Animal/Trial),
+    data = liv_data)
+```
+
+```{r}
+tab_model(model_final)
+```
+
+### Residuals Check
+
+```{r}
+res <- residuals(model_final)
+      
+p1 <- ggplot(data = data.frame(residuals = res)) +
+  geom_histogram(aes(x = residuals), bins = 25,
+                 fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Residuals")
+
+p2 <- ggplot(
+  data = data.frame(residuals = res),
+  aes(sample = residuals)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = "QQ Plot of Residuals")
+
+grid.arrange(p1, p2, nrow = 1)
+
+p1 <- plot(model_final, resid(.) ~ fitted(.), abline=0, main = "All Data")
+p2 <- plot(model_final, resid(.) ~ fitted(.)|Animal, abline=0, main = "By Animal")
+
+grid.arrange(p1, p2, nrow = 1, widths = c(1.5,2))
+```
+
+### Effects
+
+```{r}
+emmip(model_final, formula = Group ~ combMeasurement) +
+  theme(aspect.ratio = 0.5)
+
+emmip(model_final, formula = combMeasurement ~ Group) +
+  theme(aspect.ratio = 0.5)
+
+# grid.arrange(p1, p2, nrow = 2)
+```
+
+### Post-hoc tests
+
+```{r message=FALSE, warning=FALSE}
+grp_eff <- pairs(emmeans(model_final, ~ Group | combMeasurement))
+msrmnt_eff <- pairs(emmeans(model_final, ~ combMeasurement | Group))
+df1 <- rbind(grp_eff, msrmnt_eff, adjust = "none") %>% 
+  data.frame()
+
+df2 <- rbind(grp_eff, msrmnt_eff, adjust = "holm") %>% 
+  data.frame() %>% 
+  mutate(p.value.adj = p.value) %>% 
+  select(-p.value)
+      
+df <- df1 %>% 
+  left_join(df2)
+
+df <- df %>% bind_cols(
+  t_to_d(t = df$t.ratio, df_error = df$df) %>%
+    data.frame() %>%
+    round(2) %>%
+    dplyr::select(d)) %>%
+  mutate(eff_size = interpret_d(d)) %>%
+  dplyr::select(-c(df))
+
+df %>%
+  kable(escape = F, digits = 4, caption = "Multiple Comparisons") %>%
+  kable_classic_2(full_width = F) %>%
+  footnote(general = "P value adjustment: holm method for 30 tests") %>%
+  kable_styling() %>%
+  row_spec(
+    which(df$p.value.adj < 0.05), bold = T,
+    background = "#d6f5d6")
+```
+
+
+
