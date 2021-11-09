@@ -1,5 +1,6 @@
 function csdStruct(raw,figs,datap,Animal,AnimalName,Group,CondList,CondName,channels,LII,LIV,LV,LVI,iAn)
 
+
 # loop through each type of measurement condition (specified by CondName)
 Condition = Dict()
 for iCond = 1:length(CondName)
@@ -11,7 +12,7 @@ for iCond = 1:length(CondName)
         println("Analyzing measurement: " * measurement[1:end-4])
 
         csdData,snkData = Dynamic_CSD(measurement,channels,LII,LIV,
-            LV,LVI,raw,figs,GroupList[iGr]);
+            LV,LVI,raw,figs,Group);
 
         Measurement[CondList[CondName[iCond]][iAn][iMeas]] = csdData,snkData;
     end

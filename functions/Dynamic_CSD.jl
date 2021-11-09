@@ -48,30 +48,30 @@ function plotCSD(AvgCSD,snkData,frqz,BL,measurement,figs,Group, LII, LIV, LV, LV
                 startline, stopline = repeat([start],length(LII)), repeat([stop],length(LII))
                 topline, botline =  repeat([LII[1]],stop-start+1), repeat([LII[end]],stop-start+1)
                 plot!(csd_plot, startline, LII,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
                 plot!(csd_plot, stopline, LII,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
                 plot!(csd_plot, [start:stop...], botline,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
                 plot!(csd_plot, [start:stop...], topline,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
             end
         end
 
         if !ismissing(curCSD["LIV"]["SinkRMS"])
-            for isink = 1:length(curCSD["LIV"]["SinkON"])
+            for isink = 2:length(curCSD["LIV"]["SinkON"])
                 start = curCSD["LIV"]["SinkON"][isink] .+ BL
                 stop = curCSD["LIV"]["SinkOFF"][isink] .+ BL
                 startline, stopline = repeat([start],length(LIV)), repeat([stop],length(LIV))
                 topline, botline =  repeat([LIV[1]],stop-start+1), repeat([LIV[end]],stop-start+1)
                 plot!(csd_plot, startline, LIV,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
                 plot!(csd_plot, stopline, LIV,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
                 plot!(csd_plot, [start:stop...], botline,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
                 plot!(csd_plot, [start:stop...], topline,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
             end
         end
 
@@ -82,13 +82,13 @@ function plotCSD(AvgCSD,snkData,frqz,BL,measurement,figs,Group, LII, LIV, LV, LV
                 startline, stopline = repeat([start],length(LV)), repeat([stop],length(LV))
                 topline, botline =  repeat([LV[1]],stop-start+1), repeat([LV[end]],stop-start+1)
                 plot!(csd_plot, startline, LV,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
                 plot!(csd_plot, stopline, LV,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
                 plot!(csd_plot, [start:stop...], botline,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
                 plot!(csd_plot, [start:stop...], topline,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 2, c = :black)
             end
         end
 
@@ -99,13 +99,13 @@ function plotCSD(AvgCSD,snkData,frqz,BL,measurement,figs,Group, LII, LIV, LV, LV
                 startline, stopline = repeat([start],length(LVI)), repeat([stop],length(LVI))
                 topline, botline =  repeat([LVI[1]],stop-start+1), repeat([LVI[end]],stop-start+1)
                 plot!(csd_plot, startline, LVI,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 1, c = :black)
                 plot!(csd_plot, stopline, LVI,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 1, c = :black)
                 plot!(csd_plot, [start:stop...], botline,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 1, c = :black)
                 plot!(csd_plot, [start:stop...], topline,
-                    subplot = icsd, legend=false, linewidth = 3, c = :black)
+                    subplot = icsd, legend=false, linewidth = 1, c = :black)
             end
         end
     end

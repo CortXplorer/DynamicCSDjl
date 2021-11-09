@@ -23,7 +23,9 @@ function SingleTrialCSD(SWEEP, channels, BL=200)
     for i_trial = 1:size(stim_list,1)
 
         # Channel AD, or direct LFP recording
-        lfp = SWEEP["AD"][i_trial][:,channels]'
+        lfp = SWEEP["AD"][i_trial][:,channels]
+        lfp = permutedims(lfp, [2, 3, 1])
+        lfp = dropdims(lfp, dims = 1)
         # convert LFP to CSD
         csd = get_csd(lfp, chan_dist, BL, hamm_width)
 
