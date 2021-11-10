@@ -75,9 +75,7 @@ function SingleTrialCSD(SWEEP, channels, BL=200)
         AvgRELRES[i_stim] = mean(SnglTrlRELRES[i_stim],dims=1)
         SnglTrlABSRES[i_stim] = ABSRES[curTrial,:]
         AvgABSRES[i_stim] = mean(SnglTrlABSRES[i_stim],dims=1)
-        # Rectified CSD for use in layer-wise AVREC downstream
-        SnglTrlRectCSD[i_stim] = LayerAVREC[curTrial,:,:]
-        AvgRectCSD[i_stim] = dropdims(mean(SnglTrlRectCSD[i_stim],dims=1),dims=1)
+
     end
     # time to figure out what type of data frame I want to turn this into.
 
@@ -93,8 +91,6 @@ function SingleTrialCSD(SWEEP, channels, BL=200)
     Data["SnglTrlRELRES"]   = SnglTrlRELRES
     Data["AvgABSRES"]       = AvgABSRES
     Data["SnglTrlABSRES"]   = SnglTrlABSRES
-    Data["AvgRectCSD"]      = AvgRectCSD
-    Data["SnglTrlRectCSD"]  = SnglTrlRectCSD
 
     return Data
 end
