@@ -6,7 +6,7 @@
 using Statistics, DSP
 using Plots, Colors
 using MAT, CSV, JLD2, FileIO
-using DataFrames
+using DataFrames, OrderedCollections
 
 # get to correct directory and label it home
 home    = @__DIR__
@@ -26,7 +26,7 @@ include(joinpath(group,"callGroupAw.jl"))
 
 # determine data to read -- this may be a more complicated process later
 GroupList = ["CIC"]
-CondName = ["StartTono"] # "StartTono" "StartSpont" "preCL" "preAMBF" "preAMoBF" "pre1Spont" "post1Spont" "postCL" "postAMBF" "pre2Spont" "post2Spont" "postAMoBF" "EndTono" 
+CondName = ["StartTono" "StartSpont" "preCL" "preAMBF" "preAMoBF" "pre1Spont" "post1Spont" "postCL" "postAMBF" "pre2Spont" "post2Spont" "postAMoBF" "EndTono"] # "StartTono" "StartSpont" "preCL" "preAMBF" "preAMoBF" "pre1Spont" "post1Spont" "postCL" "postAMBF" "pre2Spont" "post2Spont" "postAMoBF" "EndTono" 
 
 # loop through groups
 for iGr = GroupList # for testing: iGr = "CIC"
@@ -50,7 +50,7 @@ for iGr = GroupList # for testing: iGr = "CIC"
 end
 
 ## How to load back out into workspace:
-AnimalName = "KIC12"
+AnimalName = "CIC01"
 varname  = AnimalName * "_Data"
 filename = joinpath(datap,AnimalName) * "_Data.jld2"
 Datout = load(filename)[varname]
