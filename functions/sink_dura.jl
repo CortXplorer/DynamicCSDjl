@@ -5,7 +5,7 @@ function sink_dura(LII, LIV, LV, LVI, AvgCSD, SnglTrlCSD, BL=200)
 
     LayName  = ["LII","LIV","LV","LVI"]
     LayDat   = [LII, LIV, LV, LVI]
-    StimName = string.(1:size(AvgCSD,1))
+    StimName = "Stim_" * string.(1:size(AvgCSD,1))
 
     Stim = Dict()
     for istim = 1:size(AvgCSD,1)
