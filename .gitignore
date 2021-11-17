@@ -13,5 +13,6 @@
 *.png
 *.html
 
+Project_Pipeline.jl
 ShortenData.jl
 .Rproj.user
