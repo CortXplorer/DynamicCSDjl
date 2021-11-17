@@ -39,7 +39,7 @@ function plotCSD(AvgCSD,snkData,frqz,BL,measurement,figs,Group, LII, LIV, LV, LV
             subplot = icsd,
             title   = string(frqz[icsd]))
 
-        curCSD = snkData[string(icsd)]
+        curCSD = snkData["Stim_" * string(icsd)]
 
         if !ismissing(curCSD["LII"]["SinkRMS"])
             for isink = 1:length(curCSD["LII"]["SinkON"])
