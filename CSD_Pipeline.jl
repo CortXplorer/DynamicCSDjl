@@ -20,9 +20,9 @@ include(joinpath(func,"csdStruct.jl"))
 include(joinpath(func,"Dynamic_CSD.jl"))
 include(joinpath(func,"SingleTrialCSD.jl"))
 include(joinpath(func,"get_csd.jl")) # used in SingleTrialCSD.jl
-include(joinpath(func,"sink_dura.jl"))
+include(joinpath(func,"sink_dura.jl")) # detection thresholds for sinks set here
 include(joinpath(func,"functions.jl"))
-include(joinpath(group,"callGroupAw.jl"))
+include(joinpath(group,"callGroupAw.jl")) # group metadata folder
 
 # determine data to read -- this may be a more complicated process later
 GroupList = ["CIC"]
@@ -50,7 +50,7 @@ for iGr = GroupList # for testing: iGr = "CIC"
 end
 
 ## How to load back out into workspace:
-AnimalName = "CIC01"
+AnimalName = "CIC02"
 varname  = AnimalName * "_Data"
 filename = joinpath(datap,AnimalName) * "_Data.jld2"
 Datout = load(filename)[varname]
