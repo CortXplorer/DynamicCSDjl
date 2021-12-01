@@ -49,8 +49,8 @@ for iGr = GroupList # for testing: iGr = "CIC"
     end
 end
 
-## How to load back out into workspace:
-AnimalName = "CIC02"
-varname  = AnimalName * "_Data"
-filename = joinpath(datap,AnimalName) * "_Data.jld2"
-Datout = load(filename)[varname]
+# ## How to load back out into workspace:
+# AnimalName = "CIC02"
+# varname  = AnimalName * "_Data"
+# filename = joinpath(datap,AnimalName) * "_Data.jld2"
+# Datout = load(filename)[varname]
