@@ -13,6 +13,7 @@
 *.png
 *.html
 
+AwakeDataPipeline.jl
 Project_Pipeline.jl
 ShortenData.jl
 .Rproj.user
