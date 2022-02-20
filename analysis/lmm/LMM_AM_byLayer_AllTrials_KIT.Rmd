@@ -25,15 +25,16 @@ output:
 
 
 ```{r message=FALSE, warning=FALSE}
-library(tidyverse)
+library(dplyr)
+library(readr)
 library(ggpubr)
-library(rstatix)
+# library(rstatix)
 library(knitr)
 library(kableExtra)
 library(nlme)
 library(emmeans)
-library(standardize)
-library(sjPlot)
+# library(standardize)
+# library(sjPlot)
 library(gridExtra)
 library(effectsize)
 ```
@@ -94,7 +95,8 @@ for (freq in stimfreq){
   
   cat('\n\n')
   
-  for(layer in layers){
+  # for(layer in layers){
+  for(layer in c("All")){
 
     cat("###", layer, "Layer {.tabset .tabset-fade .tabset-pills} \n")
     
@@ -103,7 +105,8 @@ for (freq in stimfreq){
       filter(ClickFreq == freq,
              Layer == layer)
     
-    for(metric in metrics){
+    # for(metric in metrics){
+    for(metric in "RMS"){
 
       cat("####", metric, "{.tabset .tabset-fade .tabset-pills} \n")
       

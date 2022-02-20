@@ -25,15 +25,16 @@ output:
 
 
 ```{r message=FALSE, warning=FALSE}
-library(tidyverse)
+library(dplyr)
+library(readr)
 library(ggpubr)
-library(rstatix)
+# library(rstatix)
 library(knitr)
 library(kableExtra)
 library(nlme)
 library(emmeans)
-library(standardize)
-library(sjPlot)
+# library(standardize)
+# library(sjPlot)
 library(gridExtra)
 library(effectsize)
 ```
