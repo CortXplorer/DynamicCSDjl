@@ -1,7 +1,11 @@
-### Set up
+### This scrip runs everything necessary to get a full CSD dataset out of the plexon-mat converted files
+# Input:    converted raw data and callGroup function from /mouse_input (e.g. KIC_0006.mat) 
+# Output:   jld2 file type with a Dictionary per condition/measurement. Each dictionary contains the average and single-trail LFP, CSD, AVREC, ABSREC, and RELSRES
+
+# Set up
 using Statistics, DSP
 using Plots, Colors
-using MAT, JLD, CSV
+using MAT, CSV, JLD2, FileIO
 using DataFrames
 
 # get to correct directory and label it home
@@ -18,19 +22,17 @@ include(joinpath(func,"SingleTrialCSD.jl"))
 include(joinpath(func,"get_csd.jl")) # used in SingleTrialCSD.jl
 include(joinpath(func,"sink_dura.jl"))
 include(joinpath(func,"functions.jl"))
-include(joinpath(group,"callGroup.jl"))
+include(joinpath(group,"callGroupAw.jl"))
 
-# determine data to read -- this will be a more complicated process later!
-GroupList = ["KIC" "KIT"]
-#"Pre" "preAM" "preAMtono" "preCL" "preCLtono" "spPre1" "spPost1" "CL" "CLtono" "spPre2" "spPost2" "AM" "AMtono" "spEnd"
-CondName = ["Pre" "CL"]
+# determine data to read -- this may be a more complicated process later
+GroupList = ["CIC"]
+CondName = ["StartTono"] # "StartTono" "StartSpont" "preCL" "preAMBF" "preAMoBF" "pre1Spont" "post1Spont" "postCL" "postAMBF" "pre2Spont" "post2Spont" "postAMoBF" "EndTono" 
 
 # loop through groups
-for iGr = 1:length(GroupList)
+for iGr = GroupList # for testing: iGr = "CIC"
     # generate lists of channels, layers, and measurements for each animal in this group
-    animalList,chanList,LIIList,LIVList,LVList,LVIList,CondList = callGroup(GroupList[iGr]) # in groups folder
-    Group = GroupList[iGr]
-    # loop through each animal (dictionary per animal)
+    animalList,chanList,LIIList,LIVList,LVList,LVIList,CondList = callGroupAw(iGr); # in groups folder
+    # loop through each animal 
     Animal = Dict()
     for iAn = 1:length(animalList)
 
@@ -42,9 +44,13 @@ for iGr = 1:length(GroupList)
         LV   = LVList[iAn]
         LVI  = LVIList[iAn]
         
-        csdStruct(raw,figs,datap,Animal,AnimalName,Group,CondList,CondName,channels,LII,LIV,LV,LVI,iAn)
+        csdStruct(raw,figs,datap,Animal,AnimalName,iGr,CondList,CondName,channels,LII,LIV,LV,LVI,iAn)
 
     end
 end
 
-# to load: Data  = load("D:\\DynamicCSDjl\\Data\\KIC02_Data.jld") -- NOT WORKING
+## How to load back out into workspace:
+AnimalName = "KIC12"
+varname  = AnimalName * "_Data"
+filename = joinpath(datap,AnimalName) * "_Data.jld2"
+Datout = load(filename)[varname]

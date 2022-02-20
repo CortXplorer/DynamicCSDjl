@@ -11,6 +11,7 @@
 *.jld2
 *.zip
 *.png
+*.html
 
 ShortenData.jl
 .Rproj.user
