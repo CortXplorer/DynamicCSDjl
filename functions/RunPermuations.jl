@@ -1,31 +1,31 @@
 function PermBetween(figs,spect,KIT_WT,KIC_WT,KIV_WT,MeasList,params,cuttime)
     takepic = 1
-    # println("Power Permutation Between Groups")
-    # # ADD: Cohen's D output column
-    # PermOut = []
-    # for iMeas = 1:length(MeasList)
-    #     curMeas = MeasList[iMeas]
-    #     for iSti = 1:length(params.stimList)
-    #         curStim = params.stimList[iSti]
-    #         for iLay = 1:length(params.layers)
-    #             curLay = params.layers[iLay]
-    #             # FIX: ERROR: KeyError: key "AM_4" not found (have it check for this key and skip if it's not there)
-    #             println("Power Measurement $curMeas, Stimulus $curStim, Layer $iLay")
-    #             Permout1 = PowerPermBetween(figs,KIT_WT,KIC_WT,"KIT","KIC",curMeas,curStim,curLay,cuttime,takepic)
-    #             Permout2 = PowerPermBetween(figs,KIT_WT,KIV_WT,"KIT","KIV",curMeas,curStim,curLay,cuttime,takepic)
-    #             Permout3 = PowerPermBetween(figs,KIC_WT,KIV_WT,"KIC","KIV",curMeas,curStim,curLay,cuttime,takepic)
+    println("Power Permutation Between Groups")
+    # ADD: Cohen's D output column
+    PermOut = []
+    for iMeas = 1:length(MeasList)
+        curMeas = MeasList[iMeas]
+        for iSti = 1:length(params.stimList)
+            curStim = params.stimList[iSti]
+            for iLay = 1:length(params.layers)
+                curLay = params.layers[iLay]
+                # FIX: ERROR: KeyError: key "AM_4" not found (have it check for this key and skip if it's not there)
+                println("Power Measurement $curMeas, Stimulus $curStim, Layer $iLay")
+                Permout1 = PowerPermBetween(figs,KIT_WT,KIC_WT,"KIT","KIC",curMeas,curStim,curLay,cuttime,takepic)
+                Permout2 = PowerPermBetween(figs,KIT_WT,KIV_WT,"KIT","KIV",curMeas,curStim,curLay,cuttime,takepic)
+                Permout3 = PowerPermBetween(figs,KIC_WT,KIV_WT,"KIC","KIV",curMeas,curStim,curLay,cuttime,takepic)
 
-    #             if !isempty(PermOut)
-    #                 PermOut = vcat(PermOut,Permout1,Permout2,Permout3)
-    #             else
-    #                 PermOut = vcat(Permout1,Permout2,Permout3)
-    #             end
-    #         end # layer
-    #     end # Stim frequency
-    # end # Measurement
+                if !isempty(PermOut)
+                    PermOut = vcat(PermOut,Permout1,Permout2,Permout3)
+                else
+                    PermOut = vcat(Permout1,Permout2,Permout3)
+                end
+            end # layer
+        end # Stim frequency
+    end # Measurement
 
-    # CSV.write(joinpath(spect,"PowerBetween" * string(cuttime[begin]) * "to" * string(cuttime[end]) * ".csv"),PermOut)
-    # # PowerBetween = CSV.File(joinpath(spect,"PowerBetween.csv")) |> DataFrame
+    CSV.write(joinpath(spect,"PowerBetween" * string(cuttime[begin]) * "to" * string(cuttime[end]) * ".csv"),PermOut)
+    # PowerBetween = CSV.File(joinpath(spect,"PowerBetween.csv")) |> DataFrame
 
     println("Phase Coherence Permutation Between Groups")
     PermOut = []
@@ -149,7 +149,7 @@ function PowerPermBetween(figs,WTof1,WTof2,Group1,Group2,curMeas,curStim,curLay,
         );
         plot!(obsvalues,markershape=:circle,markersize=10);
 
-        name = joinpath(figs,"Spectral",curComp) * "_" * string(cuttime[begin]) * "to" * string(cuttime[end]) * "ms_" * curMeas * "_" * curStim * "_" * curLay * "_Power_PermViolins.png"
+        name = joinpath(figs,"Spectral",curComp) * "_" * string(cuttime[begin]) * "to" * string(cuttime[end]) * "ms_" * curMeas * "_" * curStim * "_" * curLay * "_Power_PermViolins.svg"
         savefig(PermPlot, name)
     end
 
@@ -248,7 +248,7 @@ function PhasePermBetween(figs,WTof1,WTof2,Group1,Group2,curMeas,curStim,curLay,
         );
         plot!(obsvalues,markershape=:circle,markersize=10);
 
-        name = joinpath(figs,"Spectral",curComp) * "_" * string(cuttime[begin]) * "to" * string(cuttime[end]) * "ms_" * curMeas * "_" * curStim * "_" * curLay * "_Phase_PermViolins.png"
+        name = joinpath(figs,"Spectral",curComp) * "_" * string(cuttime[begin]) * "to" * string(cuttime[end]) * "ms_" * curMeas * "_" * curStim * "_" * curLay * "_Phase_PermViolins.svg"
         savefig(PermPlot, name)
     end
 

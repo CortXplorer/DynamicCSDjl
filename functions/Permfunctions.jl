@@ -77,10 +77,10 @@ end
 function differenceplots(figs, params, grp1_mean, grp2_mean, difmeans, clusters, Group1, Group2, curComp, curMeas,curStim,curLay,cuttime,typefig="power")
     if typefig == "power"
         CLIM = (-5,5)
-        typecall = "_Power.png"
+        typecall = "_Power.svg"
     elseif typefig == "phase"
         CLIM = (0.0,0.8)
-        typecall = "_Phase.png"
+        typecall = "_Phase.svg"
     end
     frex = exp10.(range(log10(params.frequencyLimits[1]),log10(params.frequencyLimits[2]), length=params.timeBandWidth))
     figTime = [cuttime...]
