@@ -16,8 +16,8 @@ include(joinpath(group,"callGroup.jl")) # contains animal data
 
 Groups   = ["KIC" "KIT" "KIV"]
 condList = ["preCL_1","CL_1","preAM_1","AM_1"]
-stimfrq  = ["2Hz" "5Hz" "10Hz" "20Hz" "40Hz"]
-layers   = ["II" "IV" "V" "VI"]
+stimfrq  = ["5Hz"] #"2Hz" "5Hz" "10Hz" "20Hz" "40Hz"
+layers   = ["IV" "V"] # "II" "IV" "V" "VI"
 
 # this calculates CFC at a single trial level and produces the CFCtable.csv with which further testing can be done. Current run-time is 8+ hours so ONLY run if a new table is needed. (we can figure out how to get this runtime down if needed)
 # ______________________________________________________________________________________
@@ -44,58 +44,58 @@ KIV = KIV[KIV[:,:Layer] .== "VI",:]
 
 # performing this very roughly now to get a sense for it
 KICpream   = KIC[KIC[:,:Condition] .== "preAM_1",:]
-KICpream   = filter(row -> ! isnan(row.ObsDist_lowgam), KICpream) # find out where nans coming from!!
-CprAM_mean = mean(KICpream.ObsDist_lowgam)
+KICpream   = filter(row -> ! isnan(row.ObsDist_higam), KICpream) # find out where nans coming from!!
+CprAM_mean = mean(KICpream.ObsDist_higam)
 
 KITpream   = KIT[KIT[:,:Condition] .== "preAM_1",:]
-KITpream   = filter(row -> ! isnan(row.ObsDist_lowgam), KITpream) # find out where nans coming from!!
-TprAM_mean = mean(KITpream.ObsDist_lowgam)
+KITpream   = filter(row -> ! isnan(row.ObsDist_higam), KITpream) # find out where nans coming from!!
+TprAM_mean = mean(KITpream.ObsDist_higam)
 
 KIVpream   = KIV[KIV[:,:Condition] .== "preAM_1",:]
-KIVpream   = filter(row -> ! isnan(row.ObsDist_lowgam), KIVpream) # find out where nans coming from!!
-VprAM_mean = mean(KIVpream.ObsDist_lowgam)
+KIVpream   = filter(row -> ! isnan(row.ObsDist_higam), KIVpream) # find out where nans coming from!!
+VprAM_mean = mean(KIVpream.ObsDist_higam)
 
 ####
 
 KICam   = KIC[KIC[:,:Condition] .== "AM_1",:]
-KICam   = filter(row -> ! isnan(row.ObsDist_lowgam), KICam) # find out where nans coming from!!
-CAM_mean = mean(KICam.ObsDist_lowgam)
+KICam   = filter(row -> ! isnan(row.ObsDist_higam), KICam) # find out where nans coming from!!
+CAM_mean = mean(KICam.ObsDist_higam)
 
 KITam   = KIT[KIT[:,:Condition] .== "AM_1",:]
-KITam   = filter(row -> ! isnan(row.ObsDist_lowgam), KITam) # find out where nans coming from!!
-TAM_mean = mean(KITam.ObsDist_lowgam)
+KITam   = filter(row -> ! isnan(row.ObsDist_higam), KITam) # find out where nans coming from!!
+TAM_mean = mean(KITam.ObsDist_higam)
 
 KIVam   = KIV[KIV[:,:Condition] .== "AM_1",:]
-KIVam   = filter(row -> ! isnan(row.ObsDist_lowgam), KIVam) # find out where nans coming from!!
-VAM_mean = mean(KIVam.ObsDist_lowgam)
+KIVam   = filter(row -> ! isnan(row.ObsDist_higam), KIVam) # find out where nans coming from!!
+VAM_mean = mean(KIVam.ObsDist_higam)
 
 ####
 
 KICprecl   = KIC[KIC[:,:Condition] .== "preCL_1",:];
-KICprecl   = filter(row -> ! isnan(row.ObsDist_lowgam), KICprecl); # find out where nans coming from!!
-CprCL_mean = mean(KICprecl.ObsDist_lowgam);
+KICprecl   = filter(row -> ! isnan(row.ObsDist_higam), KICprecl); # find out where nans coming from!!
+CprCL_mean = mean(KICprecl.ObsDist_higam);
 
 KITprecl   = KIT[KIT[:,:Condition] .== "preCL_1",:];
-KITprecl   = filter(row -> ! isnan(row.ObsDist_lowgam), KITprecl); # find out where nans coming from!!
-TprCL_mean = mean(KITprecl.ObsDist_lowgam);
+KITprecl   = filter(row -> ! isnan(row.ObsDist_higam), KITprecl); # find out where nans coming from!!
+TprCL_mean = mean(KITprecl.ObsDist_higam);
 
 KIVprecl   = KIV[KIV[:,:Condition] .== "preCL_1",:];
-KIVprecl   = filter(row -> ! isnan(row.ObsDist_lowgam), KIVprecl); # find out where nans coming from!!
-VprCL_mean = mean(KIVprecl.ObsDist_lowgam);
+KIVprecl   = filter(row -> ! isnan(row.ObsDist_higam), KIVprecl); # find out where nans coming from!!
+VprCL_mean = mean(KIVprecl.ObsDist_higam);
 
 ####
 
 KICcl   = KIC[KIC[:,:Condition] .== "CL_1",:];
-KICcl   = filter(row -> ! isnan(row.ObsDist_lowgam), KICcl); # find out where nans coming from!!
-CCL_mean = mean(KICcl.ObsDist_lowgam);
+KICcl   = filter(row -> ! isnan(row.ObsDist_higam), KICcl); # find out where nans coming from!!
+CCL_mean = mean(KICcl.ObsDist_higam);
 
 KITcl   = KIT[KIT[:,:Condition] .== "CL_1",:];
-KITcl   = filter(row -> ! isnan(row.ObsDist_lowgam), KITcl); # find out where nans coming from!!
-TCL_mean = mean(KITcl.ObsDist_lowgam);
+KITcl   = filter(row -> ! isnan(row.ObsDist_higam), KITcl); # find out where nans coming from!!
+TCL_mean = mean(KITcl.ObsDist_higam);
 
 KIVcl   = KIV[KIV[:,:Condition] .== "CL_1",:];
-KIVcl   = filter(row -> ! isnan(row.ObsDist_lowgam), KIVcl); # find out where nans coming from!!
-VCL_mean = mean(KIVcl.ObsDist_lowgam);
+KIVcl   = filter(row -> ! isnan(row.ObsDist_higam), KIVcl); # find out where nans coming from!!
+VCL_mean = mean(KIVcl.ObsDist_higam);
 
 ####
 
@@ -108,44 +108,44 @@ println("Pre-laser CL: treated is ", TprCL_mean, ", naive and viral control: ", 
 println("Post-laser CL: treated: ", TCL_mean, ", naive and viral control: ", CCL_mean, " and ", VCL_mean)
 
 using HypothesisTests, EffectSizes
-TvCpream = pvalue(EqualVarianceTTest(KITpream.ObsDist_lowgam, KICpream.ObsDist_lowgam))
-TvVpream = pvalue(EqualVarianceTTest(KITpream.ObsDist_lowgam, KIVpream.ObsDist_lowgam))
-CvVpream = pvalue(EqualVarianceTTest(KICpream.ObsDist_lowgam, KIVpream.ObsDist_lowgam))
+TvCpream = pvalue(EqualVarianceTTest(KITpream.ObsDist_higam, KICpream.ObsDist_higam))
+TvVpream = pvalue(EqualVarianceTTest(KITpream.ObsDist_higam, KIVpream.ObsDist_higam))
+CvVpream = pvalue(EqualVarianceTTest(KICpream.ObsDist_higam, KIVpream.ObsDist_higam))
 
-TvCam = pvalue(EqualVarianceTTest(KITam.ObsDist_lowgam, KICam.ObsDist_lowgam))
-TvVam = pvalue(EqualVarianceTTest(KITam.ObsDist_lowgam, KIVam.ObsDist_lowgam))
-CvVam = pvalue(EqualVarianceTTest(KICam.ObsDist_lowgam, KIVam.ObsDist_lowgam))
+TvCam = pvalue(EqualVarianceTTest(KITam.ObsDist_higam, KICam.ObsDist_higam))
+TvVam = pvalue(EqualVarianceTTest(KITam.ObsDist_higam, KIVam.ObsDist_higam))
+CvVam = pvalue(EqualVarianceTTest(KICam.ObsDist_higam, KIVam.ObsDist_higam))
 
-TvCprecl = pvalue(EqualVarianceTTest(KITprecl.ObsDist_lowgam, KICprecl.ObsDist_lowgam))
-TvVprecl = pvalue(EqualVarianceTTest(KITprecl.ObsDist_lowgam, KIVprecl.ObsDist_lowgam))
-CvVprecl = pvalue(EqualVarianceTTest(KICprecl.ObsDist_lowgam, KIVprecl.ObsDist_lowgam))
+TvCprecl = pvalue(EqualVarianceTTest(KITprecl.ObsDist_higam, KICprecl.ObsDist_higam))
+TvVprecl = pvalue(EqualVarianceTTest(KITprecl.ObsDist_higam, KIVprecl.ObsDist_higam))
+CvVprecl = pvalue(EqualVarianceTTest(KICprecl.ObsDist_higam, KIVprecl.ObsDist_higam))
 
-TvCcl = pvalue(EqualVarianceTTest(KITcl.ObsDist_lowgam, KICcl.ObsDist_lowgam))
-TvVcl = pvalue(EqualVarianceTTest(KITcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
-CvVcl = pvalue(EqualVarianceTTest(KICcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
+TvCcl = pvalue(EqualVarianceTTest(KITcl.ObsDist_higam, KICcl.ObsDist_higam))
+TvVcl = pvalue(EqualVarianceTTest(KITcl.ObsDist_higam, KIVcl.ObsDist_higam))
+CvVcl = pvalue(EqualVarianceTTest(KICcl.ObsDist_higam, KIVcl.ObsDist_higam))
 
-TvCpreamEF = effectsize(CohenD(KITpream.ObsDist_lowgam, KICpream.ObsDist_lowgam))
-TvVpreamEF = effectsize(CohenD(KITpream.ObsDist_lowgam, KIVpream.ObsDist_lowgam))
-CvVpreamEF = effectsize(CohenD(KICpream.ObsDist_lowgam, KIVpream.ObsDist_lowgam))
+TvCpreamEF = effectsize(CohenD(KITpream.ObsDist_higam, KICpream.ObsDist_higam))
+TvVpreamEF = effectsize(CohenD(KITpream.ObsDist_higam, KIVpream.ObsDist_higam))
+CvVpreamEF = effectsize(CohenD(KICpream.ObsDist_higam, KIVpream.ObsDist_higam))
 
-TvCamEF = effectsize(CohenD(KITam.ObsDist_lowgam, KICam.ObsDist_lowgam))
-TvVamEF = effectsize(CohenD(KITam.ObsDist_lowgam, KIVam.ObsDist_lowgam))
-CvVamEF = effectsize(CohenD(KICam.ObsDist_lowgam, KIVam.ObsDist_lowgam))
+TvCamEF = effectsize(CohenD(KITam.ObsDist_higam, KICam.ObsDist_higam))
+TvVamEF = effectsize(CohenD(KITam.ObsDist_higam, KIVam.ObsDist_higam))
+CvVamEF = effectsize(CohenD(KICam.ObsDist_higam, KIVam.ObsDist_higam))
 
-TvCpreclEF = effectsize(CohenD(KITprecl.ObsDist_lowgam, KICprecl.ObsDist_lowgam))
-TvVpreclEF = effectsize(CohenD(KITprecl.ObsDist_lowgam, KIVprecl.ObsDist_lowgam))
-CvVpreclEF = effectsize(CohenD(KICprecl.ObsDist_lowgam, KIVprecl.ObsDist_lowgam))
+TvCpreclEF = effectsize(CohenD(KITprecl.ObsDist_higam, KICprecl.ObsDist_higam))
+TvVpreclEF = effectsize(CohenD(KITprecl.ObsDist_higam, KIVprecl.ObsDist_higam))
+CvVpreclEF = effectsize(CohenD(KICprecl.ObsDist_higam, KIVprecl.ObsDist_higam))
 
-TvCclEF = effectsize(CohenD(KITcl.ObsDist_lowgam, KICcl.ObsDist_lowgam))
-TvVclEF = effectsize(CohenD(KITcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
-CvVclEF = effectsize(CohenD(KICcl.ObsDist_lowgam, KIVcl.ObsDist_lowgam))
+TvCclEF = effectsize(CohenD(KITcl.ObsDist_higam, KICcl.ObsDist_higam))
+TvVclEF = effectsize(CohenD(KITcl.ObsDist_higam, KIVcl.ObsDist_higam))
+CvVclEF = effectsize(CohenD(KICcl.ObsDist_higam, KIVcl.ObsDist_higam))
 
 ## all pvalues significant, all cohen's d very small or small
 
-Tprevcl = pvalue(EqualVarianceTTest(KITprecl.ObsDist_lowgam, KITcl.ObsDist_lowgam))
-TprevclEF = effectsize(CohenD(KITprecl.ObsDist_lowgam, KITcl.ObsDist_lowgam))
+Tprevcl = pvalue(EqualVarianceTTest(KITprecl.ObsDist_higam, KITcl.ObsDist_higam))
+TprevclEF = effectsize(CohenD(KITprecl.ObsDist_higam, KITcl.ObsDist_higam))
 
-Tprevam = pvalue(EqualVarianceTTest(KITpream.ObsDist_lowgam, KITam.ObsDist_lowgam))
-TprevamEF = effectsize(CohenD(KITpream.ObsDist_lowgam, KITam.ObsDist_lowgam))
+Tprevam = pvalue(EqualVarianceTTest(KITpream.ObsDist_higam, KITam.ObsDist_higam))
+TprevamEF = effectsize(CohenD(KITpream.ObsDist_higam, KITam.ObsDist_higam))
 
 ## within group before and after laser for treated shows no difference

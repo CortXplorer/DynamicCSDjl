@@ -48,7 +48,7 @@ end
 function thetagamma_filter(layLFPst, sr, NQ, signal, takepic=1)
 
     # set a passband [4-7] Hz 
-    Wn  = [4:7...] # theta band
+    Wn  = [2:5...] # delta band
     n   = 100      # filter order (determines accuracy)
     b   = signal.firwin(n, Wn, nyq=NQ, pass_zero=false, window="hamming") #PyCall
     Vlo = signal.filtfilt(b, 1, layLFPst) #PyCall
@@ -65,7 +65,7 @@ function thetagamma_filter(layLFPst, sr, NQ, signal, takepic=1)
     if takepic == 1 # if we want mass pic production, will need to update naming labels
         ## visualize the spectrum
         specplot = visSpectrum(layLFPst, sr) # to visualize the SPECTRUM
-        savefig("VisSpectrum.png") # yea please make a folder for this output, jesus
+        savefig("VisSpectrum.svg") # yea please make a folder for this output, jesus
         # this is relevant in selecting the filter sizes and will need to be checked again later to verify our choices above
 
         ## visualize the filters
@@ -76,7 +76,7 @@ function thetagamma_filter(layLFPst, sr, NQ, signal, takepic=1)
             xlabel = "Time [ms]",
             title = "Filters",
         )
-        savefig("VisFilters.png") # also folder for this
+        savefig("VisFilters.svg") # also folder for this
     end
 
 
@@ -115,7 +115,7 @@ function CFCget_h(phith,amplg,amphg,takepic=1)
             label = ["low gamma vs theta" "high gamma vs theta"],
             grid   = false,
         )
-        savefig("CFC.png")
+        savefig("CFC.svg")
     end
 
     return hlg, hhg 

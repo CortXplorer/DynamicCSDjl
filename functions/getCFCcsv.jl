@@ -50,7 +50,7 @@ function getCFCcsv(home,data,Groups,condList,stimfrq,layers,sr,NQ)
                             layLFPst = curLFPst[centerChan,:] # now we have our final raw signal to start with!
 
                             # Filter Step!
-                            Vlo, Vlg, Vhg = thetagamma_filter(layLFPst, sr, NQ, signal, takepic)
+                            Vlo, Vlg, Vhg = thetagamma_filter(layLFPst, sr, NQ, signal, takepic) 
 
                             phith = angle.(signal.hilbert(Vlo)) # Compute phase of theta
                             amplg = abs.(signal.hilbert(Vlg))   # Compute amp of low gamma
@@ -75,7 +75,7 @@ function getCFCcsv(home,data,Groups,condList,stimfrq,layers,sr,NQ)
 
                             if takepic == 1
                                 distplot = visSurrdist(hSlg, hShg, hlg, hhg)
-                                savefig("distSurr_vsObs.png")
+                                savefig("distSurr_vsObs.svg")
                             end
 
                             ### - To compute a p-value, we determine the proportion of surrogate h values greater than the observed h value
