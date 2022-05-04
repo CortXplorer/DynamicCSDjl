@@ -20,9 +20,9 @@ params = (
     layers=["I_II","IV","V","VI"], 
     osciBands=["alpha","beta low","beta high","gamma low","gamma high"], bandRanges=[[1:8...],[9:15...],[16:23...],[24:35...],[36:40...]])
 # real ranges captured by these data: alpha=(8:12), beta_low=(13:18), beta_high=(19:30), gamma_low=(31:60), gamma_high=(61:100)
-takepic = 1
+takepic = 0
 ## GROUP determination
-GroupList = ["KIC" "KIT" "KIV"] 
+GroupList = ["KIC"  "KIT" "KIV"]  
 ## Conditions to run
 CLList  = ["preCL" "CL" "preAM" "AM"] 
 ## Conditional picture; takepic == 1 if you do want figure output
@@ -39,8 +39,8 @@ KIV_WT = load(joinpath(spect,"KIV_WT.jld2"))["KIV_WT"]
 include(joinpath(func,"Permfunctions.jl"))
 include(joinpath(func,"RunPermuations.jl"))
 
-# this specifies the range of time accross which to permute 
-cuttime = 195:295 # 1:1377 is full length, 200:300 is first 100 ms after tone onset
+# this specifies the range of time across which to permute 
+cuttime = 1:1377 # 1:1377 is full length, 200:300 is first 100 ms after tone onset
 PermBetween(figs,spect,KIT_WT,KIC_WT,KIV_WT,MeasList,params,cuttime)
 
 # within group
