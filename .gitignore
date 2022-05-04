@@ -12,6 +12,7 @@
 *.zip
 *.png
 *.html
+*.svg
 
 AwakeDataPipeline.jl
 Project_Pipeline.jl
