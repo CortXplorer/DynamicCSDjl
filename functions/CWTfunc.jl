@@ -43,7 +43,7 @@ function CWT_Loop(figs, animalList, CondList, CLList, params, anipar, takepic)
 
             # Loop through measurements
             Measurement = Dict()
-            for iMeas = 1:length(MeasList)
+            for iMeas = 1:1 #length(MeasList)
 
                 curMeas = CondList[CLList[iCond]][iAn][iMeas]
                 curCond = CLList[iCond] * "_" * string(iMeas)
